@@ -11,7 +11,7 @@ public class MainClient {
         try (Socket socket = new Socket("localhost", 8000);
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
-             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
+             SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
 
             System.out.println("cli: " + reader.readLine());
             System.out.println("cli: " + reader.readLine());
@@ -19,12 +19,9 @@ public class MainClient {
             System.out.print("cli: ");
             while (!"quit".equals(input = consoleReader.readLine())) {
                 writer.write(input);
-                writer.newLine();
-                writer.flush();
                 System.out.print("cli: ");
             }
-            writer.write("quit");
-            writer.newLine();
+            writer.write(false, input);
         } catch (Exception e) {
             e.printStackTrace();
         }
