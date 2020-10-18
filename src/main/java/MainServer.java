@@ -21,13 +21,10 @@ public class MainServer implements Runnable {
         try {
             while (true) {
                 Socket s = _listener.accept();
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
+                SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(s.getOutputStream()));
+
                 System.out.println("srv: sending welcome message");
-                writer.write("Welcome to myserver!");
-                writer.newLine();
-                writer.write("Please enter your commands...");
-                writer.newLine();
-                writer.flush();
+                writer.write("Welcome to myserver!","Please enter your commands...");
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
                 String message;
