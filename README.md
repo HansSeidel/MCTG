@@ -12,5 +12,7 @@ This repository is based on a project create by a professor of the above mention
 To take a look at the his project you might visit: [Daniel Kienböck: Server-Client example in github](https://github.com/kienboec/ClientServerSampleInJava.git).
 
 ##Tasks
-
-###1. 
+###Moodle Links
+1. [Task in Moodle](https://moodle.technikum-wien.at/mod/assign/view.php?id=567916)
+###1. Structure
+Create some simply graphics that show your class structure and your plan
