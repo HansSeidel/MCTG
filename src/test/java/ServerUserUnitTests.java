@@ -54,7 +54,7 @@ class ServerUserUnitTests {
         user.addCardToStack(new Card("giant_spider", 15, ECardType.MONSTER,24), new Card("firestrike", 10, ECardType.SPELL,80));
 
         //assert
-        assertEquals(ex_stack,user.getStack());
+        assertEquals(ex_stack[0].getName(),user.getStack()[0].getName());
     }
 
 }

@@ -29,7 +29,10 @@ public class Card implements ICard{
     }
 
     @Override
-    public boolean equals() {
-        return false;
+    public boolean equals(Card card) {
+        if(!this.name.equals(card.getName())) return false;
+        if(this.damage != card.getDamage()) return false;
+        if(this.type != card.type) return false;
+        return this.occurance != card.getOccurance()? false:true;
     }
 }
