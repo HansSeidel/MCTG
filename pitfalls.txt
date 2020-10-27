@@ -2,3 +2,10 @@
 Setup:
 I tried to create the server client setup by installing and connecting a local server (tomcat) instead of just using
 Java
+
+HTTP-Request Tries:
+    Wrote GET inside the reqeust wrong (Get) -> 400 Bad Request
+
+BufferWriter:
+    BufferedWriter does not fit the correct formats so it response in TimeOutException. PrintWriter does.
+    Looking closely at the using of newLine(), the BufferedWriter works too.

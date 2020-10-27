@@ -36,7 +36,8 @@ public class SimpleBufferedWriter extends BufferedWriter {
                 super.write(line);
                 super.newLine();
             }
+        }else{
+            write(str);
         }
-        write(str);
     }
 }
