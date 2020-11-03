@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URLEncoder;
+import java.net.http.HttpRequest;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;

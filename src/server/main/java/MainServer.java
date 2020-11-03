@@ -8,6 +8,24 @@ public class MainServer implements Runnable {
 
     private static ServerSocket _listener = null;
 
+    /*
+     * TODO Handle Request so structure.json is the response (If the request was propper formatted)
+     * Pseudocode to aim for:
+     * //HandleRequest is called after a message is recieved by the listener.
+     * //Inside HandleRequest the format is proofed.
+     * HandleRequest request = new HandleRequest(msg);
+     * //With correctFormat you'll find out if the request was correct.
+     * if(request.correctFormat){
+     *      //SendResponse prepares a response object (Maybe MyHTTPHandler)
+     *      SendResponse response = new SendResponse (request.host,request.port);
+     *      //request.fullFill() does the server-specific actions (Maybe by another Class).
+     *      //Afterwards it returns an HTTP Response in format (String/JSON). With Status-Code;
+     *      response.message = request.fullFill();
+     *      //response.send() sends the message;
+     *      response.send
+     *
+     */
+
     public static void main(String[] args) {
         System.out.println("start server");
 
