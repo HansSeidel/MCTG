@@ -1,15 +1,12 @@
 package bif3.swe.if20b211.api;
 
-import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
 import java.net.Socket;
-import java.net.URI;
-import java.net.URL;
+import java.net.SocketException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,6 +26,7 @@ public class MyHttpHandler {
     //Necessary Variables
     private String host;
     private int port;
+    private int sTimeout = 2000;
 
     //Header default information
     //Should be automatically took by the program. For now, they are just included by an default set and can be overwritten.
@@ -44,6 +42,7 @@ public class MyHttpHandler {
     };
 
     private HashMap<String,String> optionalHeader = new HashMap<String,String>();
+    private String customHostForNextRequest = null;
 
     /**
      *
@@ -78,22 +77,60 @@ public class MyHttpHandler {
     }
 
     //TODO Add error handling for to many Arguments in String Array
+
+    /**
+     * This function adds optional HEADER information:
+     *   - format_example: optionalHeader({"Connection: ","keep-alive"},{"auth-token: ", "dh2k3l4kjjasdf8894ngfk"})
+     * @param optionalHeaders
+     */
     public void addOptionalHeader(String[] ... optionalHeaders) {
         for(String[] header : optionalHeaders){
             this.optionalHeader.put(header[0],header[1]);
         }
     }
 
-    public HashMap<String, String> getOptionalHeader(){
+    public HashMap<String, String> getOptionalHeaders(){
         return optionalHeader;
     }
+    public HashMap<String,String> getDefaultHeaders(){
+        return this.defaultHeader;
+    }
 
+    /**
+     * Gives all Headers in JSON Format as String
+     * @return String
+     */
+    public String getAllHeaders(){
+        String result = "{\"headers: \": {";
+        HashMap<String ,String> allHeaders = new HashMap<String,String>();
+        allHeaders.putAll(this.defaultHeader);
+        allHeaders.putAll(this.optionalHeader);
+        Iterator it = allHeaders.entrySet().iterator();
+        for(Map.Entry pair = (Map.Entry)it.next();it.hasNext();pair = (Map.Entry)it.next()){
+            result += String.format("\"%s\":\"%s\"",pair.getKey().toString(), pair.getValue().toString());
+            result += it.hasNext()?",":"}}";
+            it.remove();
+        }
+        return result;
+    }
+
+    /**
+     * Initializes a http Handler for a sepcific Website or Server, on a specific port.
+     * Optional add a HasMap<String, String> for HeaderOptions of each Request.
+     * If you not add headerOption, a default Header is generated (Hardcoded).
+     * You may get Header Options with getHeader functions:
+     *   - getAllHeaders(); -returns String
+     *   - getDefaultHeaders(); -returns HasMap<String, String>
+     *   - getOptionalHeaders(); -returns HasMap<String, String>
+     *
+     * @param host
+     * @param port
+     */
     public MyHttpHandler(String host, int port){
         this.host = host;
         this.port = port;
         fillDefaultHeaderInformation(this.defaultHeader);
     }
-
     public MyHttpHandler(String host, int port, HashMap<String,String> defaultHeader){
         this.host = host;
         this.port = port;
@@ -101,17 +138,40 @@ public class MyHttpHandler {
     }
 
     //TODO Think about really going this way and not putting host and port into the arguments
-    public String GET(String path) throws IOException {
+
+    /**
+     * Proceeds a HTTTP/1.1 GET_Request on the objects defined host.
+     * Optional parameter path directs to a specific entry. Path will be to the domain. <www.example.api.com><path>
+     * Optional parameters args will be appended to the path as arguments <www.exampl.api.com><path>?<args>
+     * GET(); - Returns response in form ot String of the root directory of the defined HOST
+     * GET("/"); - Same as GET();
+     * GET("/sub"); - Returns the response of the get request on the subdirectory (http://www.example.api.com/sub)
+     * GET("/sub","foo=bar","foo2=bar2"); - Returns the response on the subd. with the parameters foo and bar set (http://www.example.api.com/sub?foo=bar&foo2=bar2)
+     *
+     * @param path
+     * @param args
+     * @return String
+     * @throws IOException
+     */
+    public String GET(String path, String ... args) throws IOException {
         String response = "";
         socket = new Socket(host,port);
-        socket.setSoTimeout(2000); //TODO Get settimeout out of this function
+        socket.setSoTimeout(sTimeout); //TODO Get settimeout out of this function
         SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-        String hostHeader = "Host: " + host;
-        String httpRequest = String.format("GET %s HTTP/1.1",path);
+        //Define Request
+        //TODO tmpHost??
+        String hostHeader = "Host: " + (customHostForNextRequest == null? host:customHostForNextRequest);
+        customHostForNextRequest = null;
+        //Add params if defined
+        String arguments = "";
+        for(String arg : args) arguments += arg + "&";
+        //Define complete Request
+        String httpRequest = String.format("GET %s%s HTTP/1.1",path,args.length > 0? arguments.substring(0,arguments.length()-1):arguments);
         writer.write(false,httpRequest,hostHeader);
 
+        //Write Head data
         HashMap<String,String> allHeaders = new HashMap<String, String>();
         allHeaders.putAll(defaultHeader);
         allHeaders.putAll(optionalHeader);
@@ -122,7 +182,10 @@ public class MyHttpHandler {
             it.remove(); // avoids a ConcurrentModificationException
         }
 
+        //Declare end of HEAD
         writer.newLine();
+        //Add body if defined
+
         writer.flush();
         String t;
         while((t = br.readLine()) != null) response += t + "\n";
@@ -131,5 +194,21 @@ public class MyHttpHandler {
         System.out.println("Finished GET-Request");
         return response;
     }
+    public String GET() throws IOException {
+        return GET("/");
+    }
 
+    public int getSocketTimeout() {
+        return sTimeout;
+    }
+    public void setSocketTimeout(int ms) {
+        sTimeout=ms;
+    }
+
+    public void setHost(String host){
+        this.host = host;
+    }
+    public void setCustomHostForNextRequest(String customHostForNextRequest){
+        this.customHostForNextRequest = customHostForNextRequest;
+    }
 }

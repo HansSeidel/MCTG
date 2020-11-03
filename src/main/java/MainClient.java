@@ -20,7 +20,7 @@ public class MainClient {
 
         try {
             MyHttpCRUD httpHandler = new MyHttpCRUD("localhost","https://postman-echo.com");
-            StringBuffer response = httpHandler.GET("get","foo1=bar1","foo2=bar2");
+            StringBuffer response = httpHandler.GET("GET","foo1=bar1","foo2=bar2");
             System.out.println(response.toString());
         } catch (URISyntaxException | IOException e) {
             e.printStackTrace();
