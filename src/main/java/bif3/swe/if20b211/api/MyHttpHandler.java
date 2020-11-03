@@ -168,7 +168,7 @@ public class MyHttpHandler {
         String arguments = "";
         for(String arg : args) arguments += arg + "&";
         //Define complete Request
-        String httpRequest = String.format("GET %s%s HTTP/1.1",path,args.length > 0? arguments.substring(0,arguments.length()-1):arguments);
+        String httpRequest = String.format("GET %s%s HTTP/1.1",path,args.length > 0? ("?"+arguments.substring(0,arguments.length()-1)):arguments);
         writer.write(false,httpRequest,hostHeader);
 
         //Write Head data

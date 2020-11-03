@@ -34,7 +34,7 @@ public class MainClient {
             //TODO Write many tests for this method
             MyHttpHandler handler = new MyHttpHandler("postman-echo.com",80);
             //handler.addOptionalHeader(new String[]{"Connection: ", "Keep-Alive"}); Chrashes programm
-            String response = handler.GET("/headers");
+            String response = handler.GET("/get","foo=bar","foo2=bar2");
             System.out.println(response);
         } catch (Exception e) {
             e.printStackTrace();
