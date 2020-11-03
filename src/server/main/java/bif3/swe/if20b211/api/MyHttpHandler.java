@@ -91,7 +91,7 @@ public class MyHttpHandler {
     }
 
     public HashMap<String, String> getOptionalHeaders(){
-        return optionalHeader;
+        return this.optionalHeader;
     }
     public HashMap<String,String> getDefaultHeaders(){
         return this.defaultHeader;

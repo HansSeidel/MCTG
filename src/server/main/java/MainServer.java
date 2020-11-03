@@ -11,18 +11,6 @@ public class MainServer implements Runnable {
     /*
      * TODO Handle Request so structure.json is the response (If the request was propper formatted)
      * Pseudocode to aim for:
-     * //HandleRequest is called after a message is recieved by the listener.
-     * //Inside HandleRequest the format is proofed.
-     * HandleRequest request = new HandleRequest(msg);
-     * //With correctFormat you'll find out if the request was correct.
-     * if(request.correctFormat){
-     *      //SendResponse prepares a response object (Maybe MyHTTPHandler)
-     *      SendResponse response = new SendResponse (request.host,request.port);
-     *      //request.fullFill() does the server-specific actions (Maybe by another Class).
-     *      //Afterwards it returns an HTTP Response in format (String/JSON). With Status-Code;
-     *      response.message = request.fullFill();
-     *      //response.send() sends the message;
-     *      response.send
      *
      */
 
@@ -41,19 +29,33 @@ public class MainServer implements Runnable {
         try {
             while (true) {
                 Socket s = _listener.accept();
-                SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(s.getOutputStream()));
+                //HandleRequest is called after a message is recieved by the listener.
+                //Inside HandleRequest the format is proofed.
+                HandleRequest request = new HandleRequest(s);
+                //With correctFormat you'll find out if the request was correct.
+                if(request.correctFormat()) {
+                    //SendResponse prepares a response object (Maybe MyHTTPHandler)
+                    SendResponse response = new SendResponse(s);
+                    //request.fullFill() does the server-specific actions (Maybe by another Class).
+                    //Afterwards it returns an HTTP Response in format (String/JSON). With Status-Code;
+                    response.message = request.fullFill();
+                    //response.send() sends the message;
+                    response.send();
+                }
 
-                System.out.println("srv: sending welcome message");
-                writer.write("Welcome to myserver!","Please enter your commands...");
+                //SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(s.getOutputStream()));
 
-                BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
-                String message;
-                do {
-                    message = reader.readLine();
-                    System.out.println("srv: received: " + message);
-                } while (!"quit".equals(message));
+                //System.out.println("srv: sending welcome message");
+                //writer.write("Welcome to myserver!","Please enter your commands...");
+
+                //BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                //String message;
+                //do {
+                //    message = reader.readLine();
+                //    System.out.println("srv: received: " + message);
+                //} while (!"quit".equals(message));
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
