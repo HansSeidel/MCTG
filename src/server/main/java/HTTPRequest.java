@@ -23,8 +23,7 @@ public class HTTPRequest {
         setHttpMethod(request[0]);
         setPathAndArgs(request[1]);
         this.http_version = request[2];
-        System.out.println("At position 0.0.1");
-        reader.close();
+        System.out.println("HTTPRequest is brought into format.");
     }
 
     /**
@@ -42,14 +41,18 @@ public class HTTPRequest {
 
     private HashMap<String,String> readHeaders() throws IOException {
         System.out.println("Inside readHeaders() - Formatting Headers...");
+        String head = reader.readLine();
+        if(head == null)return null;
         HashMap<String,String> res = new HashMap<String, String>();
-        for(String head = reader.readLine(); !head.isEmpty(); head = reader.readLine()){
+        while (!head.isEmpty()){
             res.put(head.substring(0,head.indexOf(":")),head.substring(head.indexOf(":")));
+            head = reader.readLine();
         }
         return res;
     }
 
     private void setHttpMethod(String s) {
+        System.out.println("Inside setHttpMethod() - Setting Request Method...");
         if(s == null) return;
         switch (s){
             case "GET":
@@ -74,6 +77,7 @@ public class HTTPRequest {
     }
 
     private void setPathAndArgs(String request) {
+        System.out.println("Inside setPathAndArgs() - Setting path and args...");
         if(request == null)return;
         if(request.indexOf('?') == -1){
             System.out.println("No arguments detected");

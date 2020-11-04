@@ -11,7 +11,6 @@ public class HandleRequest {
 
     public HandleRequest(Socket s) throws IOException {
         this.request = new HTTPRequest(s);
-        System.out.println("At position 0.0");
         evaluateStatus();
     }
 
@@ -19,9 +18,7 @@ public class HandleRequest {
         //TODO Evalute if HTTPRequest is in proper format.
         if(request.http_method == null) setStatus(400,String.format("Bad Request: Unkwon http_method: %s", request.http_version));
         if(request.path == null || request.path.isEmpty()) setStatus(404,String.format("Not Found: Path not found: %s", request.http_version));
-        System.out.println("HTTPVerision is: " + request.http_version);
         try {
-            System.out.println("HTTPVerision.charAt(6) is: " + request.http_version.charAt(5));
             if (request.http_version.charAt(5) != '1')
                 setStatus(301, "Moved Permanently: This api only responding to HTTP/1.x");
         }catch (IndexOutOfBoundsException e) {
@@ -44,15 +41,17 @@ public class HandleRequest {
         //May change status
         String body = getContentOf(path, args);
         //May change status
-        String head = buildHead();
+        String head = buildHead(body.length());
 
-        if(status != 200) return errorMessage;
         return head+body;
     }
 
-    private String buildHead() {
+    private String buildHead(int length) {
         String response = String.format("%s %s %s\n",request.http_version,status,status < 300 && status >= 200? "OK":"ERR");
-        String head = String.format("Date: %s\nServer: localhost\n", new Date().toString());
+        String head = String.format("Date: %s\n" +
+                "Server: localhost\n" +
+                "Content-length: %d\n", new Date().toString(),length);
+
         return response+head+"\n";
     }
 
@@ -75,6 +74,7 @@ public class HandleRequest {
                 resp = myReader.nextLine();
         }catch (FileNotFoundException e){
             setStatus(404, e.toString());
+            return String.format("{errorMessage:{%s}}",this.errorMessage);
         }
         return resp;
     }
