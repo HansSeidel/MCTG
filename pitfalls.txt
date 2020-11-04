@@ -6,6 +6,6 @@ Java
 HTTP-Request Tries:
     Wrote GET inside the reqeust wrong (Get) -> 400 Bad Request
 
-BufferWriter:
-    BufferedWriter does not fit the correct formats so it response in TimeOutException. PrintWriter does.
-    Looking closely at the using of newLine(), the BufferedWriter works too.
+ServerSocket closing:
+    Closing either the BufferedWriter or the BufferedReader, closes the SocketConnection as well. So the Socket can't
+    be used anymore.

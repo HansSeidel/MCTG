@@ -4,6 +4,12 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+//TODO REWRITE SO JSON IS UNDERSTABLE (For Server and for client (also for google Client)
+//TODO Fix Bug, that after a specific period of time an Exception occure (Try with Connection-Header: Close)
+//TODO WRITER POST AND UPDATE AND ETC.
+//TODO WRITE TOO MANY REQUEST Handling <optional>
+//TODO Implement TOKEN and LDAP connection <optional>
+
 public class MainServer implements Runnable {
 
     private static ServerSocket _listener = null;

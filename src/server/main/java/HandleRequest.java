@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -68,10 +69,10 @@ public class HandleRequest {
          */
         String resp = "";
         try{
-            File f = new File(path);//Define File or directory
+            File f = new File((System.getProperty("user.dir") + path));//TODO Define File or directory
             Scanner myReader = new Scanner(f);
             while(myReader.hasNext())
-                resp = myReader.nextLine();
+                resp += myReader.nextLine();
         }catch (FileNotFoundException e){
             setStatus(404, e.toString());
             return String.format("{errorMessage:{%s}}",this.errorMessage);

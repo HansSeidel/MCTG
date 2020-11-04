@@ -20,9 +20,14 @@ public class HTTPRequest {
         reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         String request[] = readRequest();
         this.headers = readHeaders(); //TODO Rewrite to Read Header and Body
-        setHttpMethod(request[0]);
-        setPathAndArgs(request[1]);
-        this.http_version = request[2];
+        if(request == null){
+            setHttpMethod(null);
+            setPathAndArgs(null);
+        }else{
+            setHttpMethod(request[0]);
+            setPathAndArgs(request[1]);
+        }
+        this.http_version = request == null? null:request[2];
         System.out.println("HTTPRequest is brought into format.");
     }
 
@@ -79,6 +84,7 @@ public class HTTPRequest {
     private void setPathAndArgs(String request) {
         System.out.println("Inside setPathAndArgs() - Setting path and args...");
         if(request == null)return;
+        if(request.indexOf('/') != -1) request = request.replace("/","\\");
         if(request.indexOf('?') == -1){
             System.out.println("No arguments detected");
             this.path = request;
