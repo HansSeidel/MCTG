@@ -39,12 +39,11 @@ public class HTTPRequest {
     }
 
     private HashMap<String,String> readHeaders() throws IOException {
+        System.out.println("Inside readHeaders() - Formatting Headers...");
         HashMap<String,String> res = new HashMap<String, String>();
         for(String head = reader.readLine(); !head.isEmpty(); head = reader.readLine()){
-            System.out.println(String.format("Going throw head elements: %s", head));
             res.put(head.substring(0,head.indexOf(":")),head.substring(head.indexOf(":")));
         }
-        System.out.println("Outside,loop");
         return res;
     }
 
@@ -74,8 +73,13 @@ public class HTTPRequest {
 
     private void setPathAndArgs(String request) {
         if(request == null)return;
+        if(request.indexOf('?') == -1){
+            System.out.println("No arguments detected");
+            this.path = request;
+            return;
+        }
         this.path = request.substring(0,request.indexOf('?'));
-
+        //Get the substring from the position of ? to the end and split it by &
         String params[] = request.substring(request.indexOf('?')).split("&");
         for(String param : params)
             this.args.put(param.substring(0,param.indexOf("=")),param.substring(param.indexOf("=")));
