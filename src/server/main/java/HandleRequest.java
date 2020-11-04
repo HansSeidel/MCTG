@@ -7,10 +7,11 @@ import java.util.Scanner;
 public class HandleRequest {
     private HTTPRequest request;
     private int status = 200;
-    private String errorMessage = "Unkown Error";
+    private String errorMessage = "No error or unknown error";
 
     public HandleRequest(Socket s) throws IOException {
         this.request = new HTTPRequest(s);
+        System.out.println("At position 0.0");
         evaluateStatus();
     }
 
@@ -18,7 +19,14 @@ public class HandleRequest {
         //TODO Evalute if HTTPRequest is in proper format.
         if(request.http_method == null) setStatus(400,String.format("Bad Request: Unkwon http_method: %s", request.http_version));
         if(request.path == null || request.path.isEmpty()) setStatus(404,String.format("Not Found: Path not found: %s", request.http_version));
-        if(request.http_version.charAt(6) != '1') setStatus(301,"Moved Permanently: This api only responding to HTTP/1.x");
+        System.out.println("HTTPVerision is: " + request.http_version);
+        try {
+            System.out.println("HTTPVerision.charAt(6) is: " + request.http_version.charAt(5));
+            if (request.http_version.charAt(5) != '1')
+                setStatus(301, "Moved Permanently: This api only responding to HTTP/1.x");
+        }catch (IndexOutOfBoundsException e) {
+            setStatus(400,"Bad Request: Unable to read http_method_version: This api only responding to HTTP/1.x");
+        }
     }
 
     public String fullFill(){
@@ -75,8 +83,10 @@ public class HandleRequest {
         this.status = i;
         this.errorMessage = e.toString();
     }
-
+    public String getStatusString(){
+        return String.format("Status Code is: %d; Status Message is: %s",this.status, this.errorMessage);
+    }
     public boolean correctFormat() {
-        return status >= 0 && status < 300? true:false;
+        return status >= 200 && status < 300;
     }
 }

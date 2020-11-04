@@ -31,14 +31,21 @@ public class MainServer implements Runnable {
                 Socket s = _listener.accept();
                 //HandleRequest is called after a message is recieved by the listener.
                 //Inside HandleRequest the format is proofed.
+                System.out.println("At position 0");
                 HandleRequest request = new HandleRequest(s);
+                System.out.println("At position 1");
                 //With correctFormat you'll find out if the request was correct.
+                System.out.println("CorrectFormat() Response: " + request.correctFormat());
+                System.out.println("Status inside request object: " + request.getStatusString());
                 if(request.correctFormat()) {
+                    System.out.println("At position 2");
+
                     //SendResponse prepares a response object (Maybe MyHTTPHandler)
                     SendResponse response = new SendResponse(s);
                     //request.fullFill() does the server-specific actions (Maybe by another Class).
                     //Afterwards it returns an HTTP Response in format (String/JSON). With Status-Code;
                     response.message = request.fullFill();
+                    System.out.println("Response message: " + response.message);
                     //response.send() sends the message;
                     response.send();
                 }

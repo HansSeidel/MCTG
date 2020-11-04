@@ -23,6 +23,8 @@ public class HTTPRequest {
         setHttpMethod(request[0]);
         setPathAndArgs(request[1]);
         this.http_version = request[2];
+        System.out.println("At position 0.0.1");
+        reader.close();
     }
 
     /**
