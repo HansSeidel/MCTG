@@ -14,23 +14,15 @@ public class HTTPRequest {
     public String path;
     public HashMap<String,String> args;
 
+
     public HTTPRequest(Socket s) throws IOException {
         this.clientSocket = s;
         reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         String request[] = readRequest();
-        this.headers = readHeaders();
+        this.headers = readHeaders(); //TODO Rewrite to Read Header and Body
         setHttpMethod(request[0]);
         setPathAndArgs(request[1]);
         this.http_version = request[2];
-    }
-
-    private void setPathAndArgs(String request) {
-        if(request == null)return;
-        this.path = request.substring(0,request.indexOf('?'));
-
-        String params[] = request.substring(request.indexOf('?')).split("&");
-        for(String param : params)
-            this.args.put(param.substring(0,param.indexOf("=")),param.substring(param.indexOf("=")));
     }
 
     /**
@@ -39,17 +31,20 @@ public class HTTPRequest {
      * @throws IOException
      */
     private String[] readRequest() throws IOException {
+        System.out.println("Inside readRequest() - Formatting request...");
         String req = reader.readLine();
         if(req == null) return null;
         String[] request = req.split(" ");
-
         return request;
     }
 
     private HashMap<String,String> readHeaders() throws IOException {
-        HashMap<String,String> res = null;
-        for(String head = reader.readLine(); head != null || !head.isEmpty() || head.equals("");head = reader.readLine())
-            res.put(head.split(":")[0],head.split(":")[1]);
+        HashMap<String,String> res = new HashMap<String, String>();
+        for(String head = reader.readLine(); !head.isEmpty(); head = reader.readLine()){
+            System.out.println(String.format("Going throw head elements: %s", head));
+            res.put(head.substring(0,head.indexOf(":")),head.substring(head.indexOf(":")));
+        }
+        System.out.println("Outside,loop");
         return res;
     }
 
@@ -75,6 +70,15 @@ public class HTTPRequest {
                 this.http_method = Http_Method.DELETE;
                 break;
         }
+    }
+
+    private void setPathAndArgs(String request) {
+        if(request == null)return;
+        this.path = request.substring(0,request.indexOf('?'));
+
+        String params[] = request.substring(request.indexOf('?')).split("&");
+        for(String param : params)
+            this.args.put(param.substring(0,param.indexOf("=")),param.substring(param.indexOf("=")));
     }
 
     enum Http_Method {

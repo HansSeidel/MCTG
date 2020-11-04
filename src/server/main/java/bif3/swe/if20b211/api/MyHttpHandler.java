@@ -7,7 +7,6 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URLEncoder;
-import java.net.http.HttpRequest;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -162,7 +161,6 @@ public class MyHttpHandler {
         BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
         //Define Request
-        //TODO tmpHost??
         String hostHeader = "Host: " + (customHostForNextRequest == null? host:customHostForNextRequest);
         customHostForNextRequest = null;
         //Add params if defined
@@ -188,6 +186,8 @@ public class MyHttpHandler {
         //Add body if defined
 
         writer.flush();
+
+        //Read response
         String t;
         while((t = br.readLine()) != null) response += t + "\n";
         br.close();

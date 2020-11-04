@@ -32,9 +32,9 @@ public class MainClient {
 
         try{
             //TODO Write many tests for this method
-            MyHttpHandler handler = new MyHttpHandler("postman-echo.com",80);
+            MyHttpHandler handler = new MyHttpHandler("localhost",8000);
             //handler.addOptionalHeader(new String[]{"Connection: ", "Keep-Alive"}); Chrashes programm
-            String response = handler.GET("/get","foo=bar","foo2=bar2");
+            String response = handler.GET("/api/structure.json");
             System.out.println(response);
         } catch (Exception e) {
             e.printStackTrace();
