@@ -29,11 +29,16 @@ public class HandleRequest {
 
     public String fullFill(){
         String result = null;
+        String mime_type = getParameterIfExists(request.args,"Content-Type");
         switch (request.http_method){
             case GET:
                 result = GET(request.path, request.args);
         }
         return result;
+    }
+
+    private String getParameterIfExists(HashMap<String, String> args, String s) {
+        return null;
     }
 
     private String GET(String path, HashMap<String,String> args) {

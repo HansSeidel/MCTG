@@ -4,11 +4,32 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.HashMap;
 
+
+/**
+ * HTTPFormat reads an incoming HTTP Request or Response and splits the information into several parts:
+ * <p>
+ * <ul>
+ *     <li>First part is the Headline of the HEAD - head_first_Line[] - containing either</li>
+ *     <ul>
+ *        <li>Request: [0] - http_method, [1] - requestDomain(requestedPath)(additionalArguments), [2] - http_version</li>
+ *        <li>Response: [0] - http_verison, [1] statusCode, [2] - String("OK"||"ERR");</li>
+ *     </ul>
+ *     <li>The Http_Format_Type - Either Enum Http_Format_Type.REQUEST or Enum Http_Format_Type.RESPONSE</li>
+ *     <li>The http_version - String version (ex. HTTP/1.1)</li>
+ *     <li>The request_method - Either one of Enum Http_Method enums or null;</li>
+ *     <li>private variable headers, and public Object Body.</li>
+ * </ul>
+ * <p>
+ * HTTPFormat provides a bunch of Functions:
+ *      {@link #readHeaders() readHeaders} method,
+ */
 public class HTTPRequest {
-    private Socket clientSocket;
     private BufferedReader reader;
     private HashMap<String, String> headers;
     private String[] body; //JSON
+    public String[] head_first_line;
+    public String request_path;
+    public Http_Format_Type http_format_type;
     public String http_version;
     public Http_Method http_method;
     public String path;
@@ -16,19 +37,56 @@ public class HTTPRequest {
 
 
     public HTTPRequest(Socket s) throws IOException {
-        this.clientSocket = s;
-        reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        String request[] = readRequest();
-        this.headers = readHeaders(); //TODO Rewrite to Read Header and Body
-        if(request == null){
-            setHttpMethod(null);
-            setPathAndArgs(null);
-        }else{
-            setHttpMethod(request[0]);
-            setPathAndArgs(request[1]);
+        this.reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
+        this.head_first_line = readFirstLine();
+        if(head_first_line != null) {
+            this.http_format_type = readFormat();
+            if(http_format_type == Http_Format_Type.RESPONSE){
+                //FOR INCOMING RESPONSES
+                this.http_version = head_first_line[0];
+                this.http_method = null;
+                this.path = null;
+                this.args = null;
+            }else{
+                //FOR INCOMING REQUESTS
+                this.http_version = head_first_line[2];
+                this.http_method = getHttpMethod(head_first_line[0]);
+                if(setPath(head_first_line[1]))
+                    setArgs(head_first_line[1]);
+            }
+
         }
-        this.http_version = request == null? null:request[2];
+        this.headers = readHeaders(); //TODO Rewrite to Read Header and Body
         System.out.println("HTTPRequest is brought into format.");
+    }
+
+    private boolean setPath(String s) {
+        System.out.println("Inside setPathAndArgs() - Setting path and args...");
+        if(s.indexOf('/') != -1) s = s.replace("/","\\");
+        if(s.indexOf('?') == -1){
+            System.out.println("No arguments detected");
+            this.path = s;
+            return false;
+        }
+        this.path = s.substring(0,s.indexOf('?'));
+        return true;
+    }
+    private void setArgs(String s) {
+        if(!s.contains("&")) {
+            String param = s.substring(s.indexOf('?'));
+            this.args.put(param.substring(0,param.indexOf("=")),param.substring(param.indexOf("=")));
+        }else{
+            String params[] = s.substring(s.indexOf('?')).split("&");
+            for(String param : params)
+                this.args.put(param.substring(0,param.indexOf("=")),param.substring(param.indexOf("=")));
+        }
+    }
+
+    private Http_Format_Type readFormat() {
+        for(Http_Method m: Http_Method.values())
+            if(head_first_line[0].equals(m.toString()))
+                return Http_Format_Type.REQUEST;
+        return Http_Format_Type.RESPONSE;
     }
 
     /**
@@ -36,7 +94,7 @@ public class HTTPRequest {
      * @return String
      * @throws IOException
      */
-    private String[] readRequest() throws IOException {
+    private String[] readFirstLine() throws IOException {
         System.out.println("Inside readRequest() - Formatting request...");
         String req = reader.readLine();
         if(req == null) return null;
@@ -56,48 +114,29 @@ public class HTTPRequest {
         return res;
     }
 
-    private void setHttpMethod(String s) {
+    private Http_Method getHttpMethod(String s) {
         System.out.println("Inside setHttpMethod() - Setting Request Method...");
-        if(s == null) return;
         switch (s){
             case "GET":
-                this.http_method = Http_Method.GET;
-                break;
+                return Http_Method.GET;
             case "POST":
-                this.http_method = Http_Method.POST;
-                break;
+                return Http_Method.POST;
             case "PATCH":
-                this.http_method = Http_Method.PATCH;
-                break;
+                return Http_Method.PATCH;
             case "PUT":
-                this.http_method = Http_Method.PUT;
-                break;
+                return Http_Method.PUT;
             case "UPDATE":
-                this.http_method = Http_Method.UPDATE;
-                break;
+                return Http_Method.UPDATE;
             case "DELETE":
-                this.http_method = Http_Method.DELETE;
-                break;
+                return Http_Method.DELETE;
         }
-    }
-
-    private void setPathAndArgs(String request) {
-        System.out.println("Inside setPathAndArgs() - Setting path and args...");
-        if(request == null)return;
-        if(request.indexOf('/') != -1) request = request.replace("/","\\");
-        if(request.indexOf('?') == -1){
-            System.out.println("No arguments detected");
-            this.path = request;
-            return;
-        }
-        this.path = request.substring(0,request.indexOf('?'));
-        //Get the substring from the position of ? to the end and split it by &
-        String params[] = request.substring(request.indexOf('?')).split("&");
-        for(String param : params)
-            this.args.put(param.substring(0,param.indexOf("=")),param.substring(param.indexOf("=")));
+        return null;
     }
 
     enum Http_Method {
         GET, POST, PATCH, PUT, UPDATE, DELETE
+    }
+    enum Http_Format_Type{
+        REQUEST, RESPONSE
     }
 }
