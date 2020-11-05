@@ -187,11 +187,41 @@ public class MyHttpHandler {
 
         writer.flush();
 
-        //Read response
-        String t;
-        while((t = br.readLine()) != null) response += t + "\n";
+        //Read headers
+        String t = br.readLine();
+        int cl = 0;
+        while(!t.isEmpty()){
+            System.out.println("line t equals: " + t);
+            response += t + "\n";
+            //Directly save Content-Length
+            if(t.indexOf(":") != -1)
+                if(t.substring(0,t.indexOf(":")).equals("Content-Length")) cl = Integer.parseInt(t.substring(t.indexOf(":")+1).trim());
+            t = br.readLine();
+        }
+        //Adding seperater between HEAD and BODY
+        response += "\n";
+        //Read body
+        //first part of condition skips the line break. t goes out of the upper loop with the value: \n
+        //Then going on to the body until the body is null (If now body, it will skip.
+        System.out.println("At the moment before the loop t equals to: " + t);
+        /*
+        char[] buf = new char[cl];
+        System.out.println(br.read(buf));
+        for(int i = 0; i < cl; i++)
+            response += buf[i];
+            buf = null;
+        */
+        int read_chars = 0;
+        while((t = br.readLine()) != null){
+            System.out.println("line t equals: " + t);
+            response += t + "\n";
+            read_chars += t.length()+1; //plus one because line break isn't count as length but is counted inside Content-Length
+            System.out.println(read_chars +" - " + cl);
+            if(read_chars >= cl) break;
+        }
         br.close();
         writer.close();
+
         System.out.println("Finished GET-Request");
         return response;
     }

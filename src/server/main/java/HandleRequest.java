@@ -44,14 +44,14 @@ public class HandleRequest {
         //May change status
         String head = buildHead(body.length());
 
-        return head+body;
+        return head+body + "\\u001a";
     }
 
     private String buildHead(int length) {
         String response = String.format("%s %s %s\n",request.http_version,status,status < 300 && status >= 200? "OK":"ERR");
         String head = String.format("Date: %s\n" +
                 "Server: localhost\n" +
-                "Content-length: %d\n", new Date().toString(),length);
+                "Content-Length: %d\n", new Date().toString(),length);
 
         return response+head+"\n";
     }
@@ -72,7 +72,7 @@ public class HandleRequest {
             File f = new File((System.getProperty("user.dir") + path));//TODO Define File or directory
             Scanner myReader = new Scanner(f);
             while(myReader.hasNext())
-                resp += myReader.nextLine();
+                resp += myReader.nextLine() + "\n";
         }catch (FileNotFoundException e){
             setStatus(404, e.toString());
             return String.format("{errorMessage:{%s}}",this.errorMessage);

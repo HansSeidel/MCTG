@@ -9,3 +9,8 @@ HTTP-Request Tries:
 ServerSocket closing:
     Closing either the BufferedWriter or the BufferedReader, closes the SocketConnection as well. So the Socket can't
     be used anymore.
+
+BufferedReader eof problem:
+    BufferedR continues Reading until eof is found. If sending a Response, the body either contains eof nor
+    the end of the last line is recognised by the BufferR. Therefore added a crosscheck with the incoming Content-Lenght
+    and the read Characters.
