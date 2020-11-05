@@ -1,24 +1,23 @@
 import java.io.*;
 import java.net.Socket;
-import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Scanner;
 
 public class HandleRequest {
-    private HTTPRequest request;
+    private HTTPFormat request;
     private int status = 200;
     private String errorMessage = "No error or unknown error";
 
     public HandleRequest(Socket s) throws IOException {
-        this.request = new HTTPRequest(s);
+        this.request = new HTTPFormat(s);
         evaluateStatus();
     }
 
     private void evaluateStatus() {
         //TODO Evalute if HTTPRequest is in proper format.
         if(request.http_method == null) setStatus(400,String.format("Bad Request: Unkwon http_method: %s", request.http_version));
-        if(request.path == null || request.path.isEmpty()) setStatus(404,String.format("Not Found: Path not found: %s", request.http_version));
+        if(request.request_path == null || request.request_path.isEmpty()) setStatus(404,String.format("Not Found: Path not found: %s", request.http_version));
         try {
             if (request.http_version.charAt(5) != '1')
                 setStatus(301, "Moved Permanently: This api only responding to HTTP/1.x");
@@ -32,7 +31,7 @@ public class HandleRequest {
         String mime_type = getParameterIfExists(request.args,"Content-Type");
         switch (request.http_method){
             case GET:
-                result = GET(request.path, request.args);
+                result = GET(request.request_path, request.args);
         }
         return result;
     }
