@@ -14,3 +14,4 @@ BufferedReader eof problem:
     BufferedR continues Reading until eof is found. If sending a Response, the body either contains eof nor
     the end of the last line is recognised by the BufferR. Therefore added a crosscheck with the incoming Content-Lenght
     and the read Characters.
+    ++ Impleneted reader.ready() as well -> is checking if next reader.readLine() leads to infinity Reading.
