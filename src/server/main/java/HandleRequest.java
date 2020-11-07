@@ -31,14 +31,51 @@ public class HandleRequest {
 
     public String fullFill(){
         String mime_type = getParameterIfExists(request.args,"Content-Type");
+        if(request.getStatus() != 200)
         switch (request.http_method){
             case GET: return GET(request.request_path, request.args);
-            case PUT: return PUT(request.request_path,request.body.toString(),request.args);
+            case PUT:
+            case POST: return PUT_POST(request.request_path,request.body.toString(),request.args);
+            case DELETE: return DELETE(request.request_path,request.args);
         }
         return null;
     }
 
-    private String PUT(String path, String body, HashMap<String, String> args) {
+    private String DELETE(String path, HashMap<String, String> args) {
+        String head;
+        if(status != 200) return request.getErrorMessage();
+        //you only may post to everything underlying of messages/
+        //TODO handle following posts:
+        //messages/3
+        //messages/3.json
+        if(!path.startsWith("\\messages")){
+            setStatus(403,"Forbidden - You may delete inside /messages/. Everything else is restricted, unless you have administrator rights");
+            return this.errorMessage;
+        }else{
+            File file = new File(System.getProperty("user.dir") + path);
+            if(file.isDirectory()){
+                setStatus(403,"Forbidden - You may delete inside /messages/. You are not allowed to delete all messages, unless you have administrator rights");
+                return this.errorMessage;
+            }else{
+                //Check for extension and add if not existing
+                if(!file.getName().endsWith(".json")){
+                    file = new File(String.format("%s%s.%s",System.getProperty("user.dir"), path,"json"));
+                }
+                try {
+                    if(!file.delete()) throw new IOException();
+                    setStatus(200,"OK - Message deleted");
+                    return this.errorMessage;
+                }catch (SecurityException e){
+                    setStatus(500, String.format("Internal Server Error - Please contact the administrator: %s", e.toString()));
+                }catch (IOException e){
+                    setStatus(404,String.format("File not Found - %s",e.toString()));
+                }
+            }
+            return this.errorMessage;
+        }
+    }
+
+    private String PUT_POST(String path, String body, HashMap<String, String> args) {
         String head;
         System.out.println("Body inside the PUT clause: " + body);
         if(status != 200) return request.getErrorMessage();
@@ -57,6 +94,11 @@ public class HandleRequest {
                 File file = new File(System.getProperty("user.dir") + path);
                 int messageNumber = 1;
                 if(file.isDirectory()){
+                    if (request.http_method.equals(HTTPFormat.Http_Method.PUT)){
+                        setStatus(405,"Method Not Allowed - Trying to PUT into a directory instead of a specific message. Try POST instead");
+                        lock.unlock();
+                        return this.errorMessage;
+                    }
                     //Getting highest number and adding the message to the next number
                     for(File f : Objects.requireNonNull(file.listFiles())){
                         System.out.println("Name of the currecnt file: " + f.getName());
@@ -66,15 +108,14 @@ public class HandleRequest {
                     }
                 }else {
                     getContentOf(path,args);
-                    if(status != 404){
+                    if(status != 404 && request.http_method.equals(HTTPFormat.Http_Method.PUT)){
                         System.out.println("Inside restricted area");
-                        setStatus(405,"Method Not Allowed - Trying to overwrite existing message. Use PATCH instead.");
+                        setStatus(405,"Method Not Allowed - Trying to overwrite existing message. Use PATCH/PUT instead.");
+                        lock.unlock();
                         return this.errorMessage;
                     }
                     //Checking if the post was send with file extension
                     //TODO make short
-                    System.out.println("Path bevore checking File Extension: " + path);
-                    System.out.println("Condition to be checked with -1: " + (path.substring(path.lastIndexOf('\\')+1)).indexOf('.'));
                     if((path.substring(path.lastIndexOf('\\')+1)).indexOf('.') == -1){
                         //Without file extension
                         System.out.println("String that should be parsed into int: " + path.substring(path.lastIndexOf('\\')+1));
@@ -93,6 +134,7 @@ public class HandleRequest {
                 setStatus(201, "Created - Successfully created message with the id: " + messageNumber);
             } catch (IOException e){
                 setStatus(404, e.toString());
+                lock.unlock();
                 return String.format("{errorMessage:{%s}}",this.errorMessage);
             } finally {
                 lock.unlock();
