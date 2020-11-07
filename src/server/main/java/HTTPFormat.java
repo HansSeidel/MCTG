@@ -72,7 +72,7 @@ public class HTTPFormat {
      * @throws IOException
      */
     private String[] readFirstLine() throws IOException {
-        System.out.println("Inside readRequest() - Formatting request...");
+        System.out.println("Inside readFirstLine() - Formatting request...");
         if(!reader.ready()){
             setStatus(400, "Bad Request - Header request seems to lead to endless read action.");
         }
@@ -112,6 +112,12 @@ public class HTTPFormat {
 
     private boolean setPath(String s) {
         System.out.println("Inside setPathAndArgs() - Setting path and args...");
+        System.out.println("This is the income of the String s inside setPath: " + s);
+        if((s.indexOf('/') == -1 && s.indexOf('\\') == -1)|| s.length() == 1){
+            System.out.println("Inside if");
+            this.request_path = "\\index.html";
+            return s.indexOf('?') != -1;
+        }
         if(s.indexOf('/') != -1) s = s.replace("/","\\");
         if(s.indexOf('?') == -1){
             System.out.println("No arguments detected");

@@ -62,19 +62,9 @@ public class HandleRequest {
     }
 
     private String getContentOf(String path, HashMap<String, String> args) {
-        /*
-        TODO Handle following paths:
-         localhost:8080/api -> leads to structure
-         localhost:8080/api/ -> leads to structure
-         localhost:8080/api/structure -> leads to structure
-         localhost:8080/api/structure.json -> leads to structure
-         localhost:8080/messages -> leads to all messages
-         localhost:8080/messages/ -> leads to all messages
-         ...
-         */
         String resp = "";
         try{
-            File f_d = new File((System.getProperty("user.dir") + path));//TODO Define File or directory
+            File f_d = new File((System.getProperty("user.dir") + path));
             if(f_d.isDirectory()){
                 System.out.println("Right bevore Loop");
                 resp = "{";
@@ -108,8 +98,9 @@ public class HandleRequest {
                 resp += "}\n";
                 System.out.println("Right after Loop");
             }else{
-                //Now only writing for JSON response
-                if(!f_d.getName().substring(f_d.getName().lastIndexOf('.')+1).equals("json"))
+                //Now only writing for JSON response and index.html
+
+                if(!f_d.getName().substring(f_d.getName().lastIndexOf('.')+1).equals("json") && !path.equals("\\index.html"))
                     f_d = new File(String.format("%s.%s",f_d.getPath(),"json"));
                 Scanner myReader = new Scanner(f_d);
                 while(myReader.hasNext())
