@@ -130,9 +130,9 @@ public class HandleRequest {
         String resp = "";
         try{
             File f_d = new File((System.getProperty("user.dir") + path));
+            resp = "{";
             if(f_d.isDirectory()){
                 System.out.println("Right bevore Loop");
-                resp = "{";
                 for (File f: Objects.requireNonNull(f_d.listFiles())){
                     if(!f.isDirectory()){
                         Scanner newScanner;
@@ -160,17 +160,17 @@ public class HandleRequest {
                         }
                     }
                 }
-                resp += "}\n";
                 System.out.println("Right after Loop");
             }else{
                 //Now only writing for JSON response and index.html
-
                 if(!f_d.getName().substring(f_d.getName().lastIndexOf('.')+1).equals("json") && !path.equals("\\index.html"))
                     f_d = new File(String.format("%s.%s",f_d.getPath(),"json"));
+                resp += String.format("\n\"%s\": \n\t",f_d.getName().substring(0,f_d.getName().indexOf('.')));
                 Scanner myReader = new Scanner(f_d);
                 while(myReader.hasNext())
-                    resp += myReader.nextLine() + "\n";
+                    resp += myReader.nextLine() + (myReader.hasNext()? "\n\t":"\n");
             }
+            resp += "}\n";
         }catch (FileNotFoundException e){
             setStatus(404, e.toString());
             return String.format("{errorMessage:{%s}}",this.errorMessage);
