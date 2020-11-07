@@ -147,7 +147,7 @@ public class HTTPFormat {
         }
         HashMap<String,String> res = new HashMap<String, String>();
         while (!head.isEmpty()){
-            res.put(head.substring(0,head.indexOf(":")),head.substring(head.indexOf(":")));
+            res.put(head.substring(0,head.indexOf(":")).trim(),head.substring(head.indexOf(":")+1).trim());
             head = reader.readLine();
         }
         return res;
@@ -158,23 +158,31 @@ public class HTTPFormat {
         String res = "";
         int read_chars = 0;
         int cl = 0;
+        System.out.println("Inside readBody() - perfoming Body format...");
         if(!reader.ready()){
+            System.out.println("NextLine is not readable");
             return null;
         }else{
             if(getHeaderValueByName("Content-Length").isEmpty() || getHeaderValueByName("Content-Length") == null){
+                System.out.println("Problem with content length");
                 setStatus(411, "Length Required: Please add Content-Length to the headers");
                 return null;
             }
             try{
+                System.out.println("Trying to parse contentlength into int");
+                System.out.println("GetHeaderValueByName: " + getHeaderValueByName("Content-Length"));
                 cl = Integer.parseInt(getHeaderValueByName("Content-Length"));
             }catch (NumberFormatException e){
+                System.out.println("Problem with parsing process");
                 setStatus(412, String.format("Precondition Failed: %s",e.toString()));
                 return null;
             }
         }
+        System.out.println("Infront of readLine");
         while((t = reader.readLine()) != null){
-            t += t + "\n";
+            res += t + "\n";
             read_chars += t.length()+1; //plus one because line break isn't count as length but is counted inside Content-Length
+            System.out.println("String processing: " + t);
             System.out.println(read_chars +" - " + cl);
             if(read_chars >= cl) return new Body(res,getHeaderValueByName("Content-Type"));
         }

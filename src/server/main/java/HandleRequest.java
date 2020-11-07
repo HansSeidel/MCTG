@@ -1,14 +1,16 @@
+
+
 import java.io.*;
 import java.net.Socket;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class HandleRequest {
     private HTTPFormat request;
     private int status = 200;
     private String errorMessage = "No error or unknown error";
+    private Lock lock = new ReentrantLock();
 
     public HandleRequest(Socket s) throws IOException {
         this.request = new HTTPFormat(s);
@@ -28,13 +30,76 @@ public class HandleRequest {
     }
 
     public String fullFill(){
-        String result = null;
         String mime_type = getParameterIfExists(request.args,"Content-Type");
         switch (request.http_method){
-            case GET:
-                result = GET(request.request_path, request.args);
+            case GET: return GET(request.request_path, request.args);
+            case PUT: return PUT(request.request_path,request.body.toString(),request.args);
         }
-        return result;
+        return null;
+    }
+
+    private String PUT(String path, String body, HashMap<String, String> args) {
+        String head;
+        System.out.println("Body inside the PUT clause: " + body);
+        if(status != 200) return request.getErrorMessage();
+        //you only may post to everything underlying of messages/
+        //TODO handle following posts:
+            //messages
+            //messages/
+            //messages/3
+            //messages/3.json
+        if(!path.startsWith("\\messages")){
+            setStatus(403,"Forbidden - You may post to /messages. Everything else is restricted, unless you have administrator rights");
+            return this.errorMessage;
+        }else{
+            lock.lock();
+            try {
+                File file = new File(System.getProperty("user.dir") + path);
+                int messageNumber = 1;
+                if(file.isDirectory()){
+                    //Getting highest number and adding the message to the next number
+                    for(File f : Objects.requireNonNull(file.listFiles())){
+                        System.out.println("Name of the currecnt file: " + f.getName());
+                        System.out.println("charAt'.' of the currecnt filename: " + f.getName().indexOf('.'));
+                         int tmpMN = Integer.parseInt(f.getName().substring(0,f.getName().indexOf('.')));
+                         messageNumber = tmpMN >= messageNumber? tmpMN+1:messageNumber;
+                    }
+                }else {
+                    getContentOf(path,args);
+                    if(status != 404){
+                        System.out.println("Inside restricted area");
+                        setStatus(405,"Method Not Allowed - Trying to overwrite existing message. Use PATCH instead.");
+                        return this.errorMessage;
+                    }
+                    //Checking if the post was send with file extension
+                    //TODO make short
+                    System.out.println("Path bevore checking File Extension: " + path);
+                    System.out.println("Condition to be checked with -1: " + (path.substring(path.lastIndexOf('\\')+1)).indexOf('.'));
+                    if((path.substring(path.lastIndexOf('\\')+1)).indexOf('.') == -1){
+                        //Without file extension
+                        System.out.println("String that should be parsed into int: " + path.substring(path.lastIndexOf('\\')+1));
+                        messageNumber = Integer.parseInt(path.substring(path.lastIndexOf('\\')+1));
+                    }else{
+                        //With file extension.
+                        messageNumber = Integer.parseInt(path.substring(path.lastIndexOf('\\')+1,path.lastIndexOf('.')));
+                    }
+                }
+                FileWriter writer = new FileWriter(String.format("%s\\messages\\%d.json",System.getProperty("user.dir"),messageNumber));
+                for (String line : body.split("\\n")) {
+                    writer.write(line + "\n");
+                }
+                writer.close();
+                body = getContentOf(String.format("\\messages\\%d.json",messageNumber),args);
+                setStatus(201, "Created - Successfully created message with the id: " + messageNumber);
+            } catch (IOException e){
+                setStatus(404, e.toString());
+                return String.format("{errorMessage:{%s}}",this.errorMessage);
+            } finally {
+                lock.unlock();
+            }
+            head = buildHead(body.length());
+            return head+body + "\\u001a";
+        }
     }
 
     private String getParameterIfExists(HashMap<String, String> args, String s) {
@@ -42,7 +107,7 @@ public class HandleRequest {
     }
 
     private String GET(String path, HashMap<String,String> args) {
-        if(status != 200) return errorMessage;
+        if(status != 200) return request.getErrorMessage();
         //TODO implenet args as well
         //May change status
         String body = getContentOf(path, args);
