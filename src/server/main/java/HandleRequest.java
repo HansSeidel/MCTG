@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Scanner;
 
 public class HandleRequest {
@@ -67,17 +68,57 @@ public class HandleRequest {
          localhost:8080/api/ -> leads to structure
          localhost:8080/api/structure -> leads to structure
          localhost:8080/api/structure.json -> leads to structure
-         localhost:8080/api/messages -> leads to all messages
-         localhost:8080/api/messages/ -> leads to all messages
+         localhost:8080/messages -> leads to all messages
+         localhost:8080/messages/ -> leads to all messages
          ...
          */
         String resp = "";
         try{
-            File f = new File((System.getProperty("user.dir") + path));//TODO Define File or directory
-            Scanner myReader = new Scanner(f);
-            while(myReader.hasNext())
-                resp += myReader.nextLine() + "\n";
+            File f_d = new File((System.getProperty("user.dir") + path));//TODO Define File or directory
+            if(f_d.isDirectory()){
+                System.out.println("Right bevore Loop");
+                resp = "{";
+                for (File f: Objects.requireNonNull(f_d.listFiles())){
+                    if(!f.isDirectory()){
+                        Scanner newScanner;
+                        //Checking if it is a json file (path/filename.json)
+                        if (f.getPath().lastIndexOf(".") > 0 && f.getPath().substring(f.getPath().lastIndexOf(".")+1).equals("json")){
+                            System.out.println("inside last conditional check");
+                            newScanner = new Scanner(f);
+                            resp += (resp.charAt(resp.length()-1)) == '}'? ",":"\n";
+                            resp += String.format("\"%s\": ",f.getName().substring(0,f.getName().indexOf('.')));
+                            while (newScanner.hasNext()){
+                                //adding fileName as parameter
+                                resp += newScanner.nextLine() + (newScanner.hasNext()? "\n\t":"\n");
+                            }
+                            /*
+                                Example process:
+                                    {
+                                        1:{
+                                        ...
+                                        },
+                                        2: {
+                                        ...
+                                        }
+                                     }
+                             */
+                        }
+                    }
+                }
+                resp += "}\n";
+                System.out.println("Right after Loop");
+            }else{
+                //Now only writing for JSON response
+                if(!f_d.getName().substring(f_d.getName().lastIndexOf('.')+1).equals("json"))
+                    f_d = new File(String.format("%s.%s",f_d.getPath(),"json"));
+                Scanner myReader = new Scanner(f_d);
+                while(myReader.hasNext())
+                    resp += myReader.nextLine() + "\n";
+            }
         }catch (FileNotFoundException e){
+            setStatus(404, e.toString());
+            return String.format("{errorMessage:{%s}}",this.errorMessage);
+        }catch (NullPointerException e){
             setStatus(404, e.toString());
             return String.format("{errorMessage:{%s}}",this.errorMessage);
         }

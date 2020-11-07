@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -47,6 +48,7 @@ public class HTTPFormat {
             this.http_format_type = readFormat();
             if(http_format_type == Http_Format_Type.RESPONSE){
                 //FOR INCOMING RESPONSES
+                if(!head_first_line[0].startsWith("HTTP/1")) setStatus(505, "HTTP Version Not Supported: This api only responding to HTTP/1.x");
                 this.http_version = head_first_line[0];
                 this.http_method = null;
                 this.request_path = null;
@@ -62,6 +64,50 @@ public class HTTPFormat {
                 this.body = readBody();
         }
         System.out.println("HTTPRequest is brought into format.");
+    }
+
+    /**
+     * If http-Request was correct, returns in String Array format: [0]- Method, [1]- path?parmas, [2]- httpVersion
+     * @return String
+     * @throws IOException
+     */
+    private String[] readFirstLine() throws IOException {
+        System.out.println("Inside readRequest() - Formatting request...");
+        if(!reader.ready()){
+            setStatus(400, "Bad Request - Header request seems to lead to endless read action.");
+        }
+        String req = reader.readLine();
+        if(req == null) {
+            setStatus(400, "Bad Request - No request found");
+            return null;
+        }
+        String[] request = req.split(" ");
+        if(request.length != 3){
+            setStatus(400, "Bad Request - Header must contain 3 parts separated by a space. Encountered: " + request.length);
+            return null;
+        }
+        return request;
+    }
+
+    private Http_Format_Type readFormat() {
+        for(Http_Method m: Http_Method.values())
+            if(head_first_line[0].equals(m.toString()))
+                return Http_Format_Type.REQUEST;
+        return Http_Format_Type.RESPONSE;
+    }
+
+    private Http_Method getHttpMethod(String s) {
+        System.out.println("Inside setHttpMethod() - Setting Request Method...");
+        switch (s){
+            case "GET": return Http_Method.GET;
+            case "POST": return Http_Method.POST;
+            case "PATCH": return Http_Method.PATCH;
+            case "PUT": return Http_Method.PUT;
+            case "UPDATE": return Http_Method.UPDATE;
+            case "DELETE": return Http_Method.DELETE;
+        }
+        setStatus(501, "Not Implemented - The Http method is not implemented.");
+        return null;
     }
 
     private boolean setPath(String s) {
@@ -86,30 +132,13 @@ public class HTTPFormat {
         }
     }
 
-    private Http_Format_Type readFormat() {
-        for(Http_Method m: Http_Method.values())
-            if(head_first_line[0].equals(m.toString()))
-                return Http_Format_Type.REQUEST;
-        return Http_Format_Type.RESPONSE;
-    }
-
-    /**
-     * If http-Request was correct, returns in String Array format: [0]- Method, [1]- path?parmas, [2]- httpVersion
-     * @return String
-     * @throws IOException
-     */
-    private String[] readFirstLine() throws IOException {
-        System.out.println("Inside readRequest() - Formatting request...");
-        String req = reader.readLine();
-        if(req == null) return null;
-        String[] request = req.split(" ");
-        return request;
-    }
-
     private HashMap<String,String> readHeaders() throws IOException {
         System.out.println("Inside readHeaders() - Formatting Headers...");
         String head = reader.readLine();
-        if(head == null || head.isEmpty())return null;
+        if(head == null || head.isEmpty()){
+            setStatus(400, "Bad Request - No headers detected.");
+            return null;
+        }
         HashMap<String,String> res = new HashMap<String, String>();
         while (!head.isEmpty()){
             res.put(head.substring(0,head.indexOf(":")),head.substring(head.indexOf(":")));
@@ -156,24 +185,21 @@ public class HTTPFormat {
         return null;
     }
 
-    private Http_Method getHttpMethod(String s) {
-        System.out.println("Inside setHttpMethod() - Setting Request Method...");
-        switch (s){
-            case "GET":
-                return Http_Method.GET;
-            case "POST":
-                return Http_Method.POST;
-            case "PATCH":
-                return Http_Method.PATCH;
-            case "PUT":
-                return Http_Method.PUT;
-            case "UPDATE":
-                return Http_Method.UPDATE;
-            case "DELETE":
-                return Http_Method.DELETE;
+    public String getArgumentByName(String name) {
+        Iterator it = this.args.entrySet().iterator();
+        while(it.hasNext()){
+            Map.Entry pair = (Map.Entry)it.next();
+            if(pair.getKey().toString().equals(name)) return pair.getValue().toString();
+            it.remove(); // avoids a ConcurrentModificationException
         }
         return null;
     }
+
+    public boolean isFormatCorrect(){return this.status < 300 && this.status >= 200;}
+    public boolean hasBody(){return this.body != null;}
+    public int getStatus(){return this.status;}
+    public String getErrorMessage(){return this.errorMessage;}
+
 
     enum Http_Method {
         GET, POST, PATCH, PUT, UPDATE, DELETE
@@ -181,8 +207,6 @@ public class HTTPFormat {
     enum Http_Format_Type{
         REQUEST, RESPONSE
     }
-
-
 
     /**
      * Body is a nested class to format the Body in a specific format depending on the MIME-TYPE.
@@ -214,5 +238,21 @@ public class HTTPFormat {
     private void setStatus(int i, String e) {
         this.status = i;
         this.errorMessage = e.toString();
+    }
+
+    @Override
+    public String toString() {
+        return "HTTPFormat{" +
+                ", headers=" + headers +
+                ", head_first_line=" + Arrays.toString(head_first_line) +
+                ", request_path='" + request_path + '\'' +
+                ", http_format_type=" + http_format_type +
+                ", http_version='" + http_version + '\'' +
+                ", http_method=" + http_method +
+                ", args=" + args +
+                ", body=" + body.toString() +
+                ", status=" + status +
+                ", errorMessage='" + errorMessage + '\'' +
+                '}';
     }
 }
