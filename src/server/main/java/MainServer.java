@@ -35,22 +35,7 @@ public class MainServer implements Runnable {
         try {
             while (true) {
                 Socket s = _listener.accept();
-                //HandleRequest is called after a message is recieved by the listener.
-                //Inside HandleRequest the format is proofed.
-                HandleRequest request = new HandleRequest(s);
-                //With correctFormat you'll find out if the request was correct.
-                if(request.correctFormat()) {
-
-                    //SendResponse prepares a response object (Maybe MyHTTPHandler)
-                    SendResponse response = new SendResponse(s);
-                    //request.fullFill() does the server-specific actions (Maybe by another Class).
-                    //Afterwards it returns an HTTP Response in format (String/JSON). With Status-Code;
-                    response.message = request.fullFill();
-                    System.out.println("Response message: " + response.message);
-                    //response.send() sends the message;
-                    response.send();
-                }
-
+                String client_string = getClientString(s);
                 //SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(s.getOutputStream()));
 
                 //System.out.println("srv: sending welcome message");
@@ -66,6 +51,37 @@ public class MainServer implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static String getClientString(Socket s) throws IOException {
+        String res = "";
+        String next = "";
+        boolean body = true;
+        BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
+        next = reader.readLine();
+        //First loop is reading until first blank line occures
+        while (!next.isEmpty()){
+            next = reader.readLine();
+            res += next+"\n";
+        }
+        System.out.println("res: " + res);
+        //Ready is waiting a short period of time and checking if there is some readable text behind the blank line.
+        if(!reader.ready()){
+            System.out.println("Not ready");
+            body = false;
+        }
+        //Reading out the rest of the incoming message
+        if(body){
+            while((next = reader.readLine()) != null){
+                res += next + "\n";
+                System.out.println("next item: "+next);
+                if(!reader.ready()){
+                    break;
+                }
+            }
+        }
+        System.out.println("Res: " + res);
+        return res.trim();
     }
 
     @Override

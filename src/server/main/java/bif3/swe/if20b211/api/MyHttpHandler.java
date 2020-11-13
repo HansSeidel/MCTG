@@ -168,6 +168,7 @@ public class MyHttpHandler {
         for(String arg : args) arguments += arg + "&";
         //Define complete Request
         String httpRequest = String.format("GET %s%s HTTP/1.1",path,args.length > 0? ("?"+arguments.substring(0,arguments.length()-1)):arguments);
+        System.out.println("Writing: " + httpRequest);
         writer.write(false,httpRequest,hostHeader);
 
         //Write Head data
@@ -177,6 +178,7 @@ public class MyHttpHandler {
         Iterator it = allHeaders.entrySet().iterator();
         while(it.hasNext()){
             Map.Entry pair = (Map.Entry)it.next();
+            System.out.println("Writing: " + (pair.getKey().toString() + pair.getValue().toString()));
             writer.write(false,(pair.getKey().toString() + pair.getValue().toString()));
             it.remove(); // avoids a ConcurrentModificationException
         }
@@ -184,7 +186,7 @@ public class MyHttpHandler {
         //Declare end of HEAD
         writer.newLine();
         //Add body if defined
-
+        System.out.println("Sending");
         writer.flush();
 
         //Read headers
@@ -257,6 +259,7 @@ public class MyHttpHandler {
         for(String arg : args) arguments += arg + "&";
         //Define complete Request
         String httpRequest = String.format("POST %s%s HTTP/1.1",path,args.length > 0? ("?"+arguments.substring(0,arguments.length()-1)):arguments);
+        System.out.println("request: " + httpRequest);
         writer.write(false,httpRequest,hostHeader);
 
         //Write Head data
@@ -267,6 +270,7 @@ public class MyHttpHandler {
         Iterator it = allHeaders.entrySet().iterator();
         while(it.hasNext()){
             Map.Entry pair = (Map.Entry)it.next();
+            System.out.println("Line: " + (pair.getKey().toString() + pair.getValue().toString()));
             writer.write(false,(pair.getKey().toString() + pair.getValue().toString()));
             it.remove(); // avoids a ConcurrentModificationException
         }
@@ -274,6 +278,7 @@ public class MyHttpHandler {
         //Declare end of HEAD
         writer.newLine();
         //Add body if defined
+        System.out.println("Body:\n " + body);
         writer.write(false,body);
         writer.flush();
 

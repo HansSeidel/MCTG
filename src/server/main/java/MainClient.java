@@ -120,7 +120,7 @@ public class MainClient {
                 System.out.println("Seems like you haven't entered a messages. Command aborted");
                 return null;
             }
-            return new String[] {command,message_path,String.format("{\n\t\"sender\":{\"%s\"},\n\t\"message\": \"%s\"",name,msg)};
+            return new String[] {command,message_path,String.format("{\n\t\"sender\":\"%s\",\n\t\"message\": \"%s\"\n}",name,msg)};
         }else if (command.startsWith("update")){
             boolean updateName;
             boolean updateMessage;
