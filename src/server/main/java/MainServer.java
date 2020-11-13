@@ -1,5 +1,5 @@
 import bif3.swe.if20b211.api.SimpleBufferedWriter;
-
+import bif3.swe.if20b211.http.Format;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -36,6 +36,8 @@ public class MainServer implements Runnable {
             while (true) {
                 Socket s = _listener.accept();
                 String client_string = getClientString(s);
+                Format client_http_format = new Format(client_string);
+                //System.out.println("client_http_format to string: " +client_http_format.toString());
                 //SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(s.getOutputStream()));
 
                 //System.out.println("srv: sending welcome message");
@@ -53,34 +55,38 @@ public class MainServer implements Runnable {
         }
     }
 
+    /**
+     * This method takes care of the communication. It extracts all the incoming data and returns it as a trimmed String.
+     * @param s - Socket
+     * @return
+     * @throws IOException
+     */
     private static String getClientString(Socket s) throws IOException {
         String res = "";
         String next = "";
         boolean body = true;
         BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
         next = reader.readLine();
-        //First loop is reading until first blank line occures
+        //First loop is reading until first blank line occurs
         while (!next.isEmpty()){
-            next = reader.readLine();
             res += next+"\n";
+            next = reader.readLine();
         }
-        System.out.println("res: " + res);
         //Ready is waiting a short period of time and checking if there is some readable text behind the blank line.
+        res += "\n";
         if(!reader.ready()){
-            System.out.println("Not ready");
             body = false;
         }
         //Reading out the rest of the incoming message
         if(body){
             while((next = reader.readLine()) != null){
                 res += next + "\n";
-                System.out.println("next item: "+next);
                 if(!reader.ready()){
                     break;
                 }
             }
         }
-        System.out.println("Res: " + res);
+        //System.out.println("Res: " + res.trim());
         return res.trim();
     }
 
