@@ -54,10 +54,10 @@ public class MainClient {
                         response = handler.POST(command[1],command[2]);
                         break;
                     case "update":
-                        //response = handler.PUT(command[1],command[2]);
+                        response = handler.PUT(command[1],command[2]);
                         break;
                     case "delete":
-                        //response = handler.DELETE(command[1]);
+                        response = handler.DELETE(command[1]);
                         break;
                 }
                 System.out.println(String.format("Response: %s",response));
@@ -136,12 +136,12 @@ public class MainClient {
                 System.out.println("You have wrote to many characters. Command aborted");
                 return null;
             }
-            updateName = name.isEmpty() || name.equalsIgnoreCase("null");
+            updateName = !(name.isEmpty() || name.equalsIgnoreCase("null"));
 
             System.out.println("Enter your message or null or blank if you don't want to update the message (For multiline Messages enter \"mlm\"):");
             String msg = br.readLine().trim();
-            if(!(updateMessage = msg.isEmpty() || msg.equals("null"))){
-                updateMessage = true;
+            updateMessage = !(msg.isEmpty() || msg.equals("null"));
+            if(updateMessage){
                 if(msg.equalsIgnoreCase("mlm")){
                     msg = "";
                     System.out.println("You activated multiline input. You may type your message line by line but it won't be used with line breaks.");
@@ -158,13 +158,13 @@ public class MainClient {
                     return null;
                 }
             }
-            if(updateMessage && updateName){
+            if(!updateMessage && !updateName){
                 System.out.println("Seems like you won't change anything. Discarding command.");
                 return null;
             }
-            return new String[] {command,(message_path+command_number[1]),"{" +
-                    (updateName?String.format("\n\t\"sender\":{\"%s\"}%s",name,updateMessage?",":""):"") +
-                    (updateMessage?String.format("\n\t\"message\": \"%s\"}",msg):"") +
+            return new String[] {command.split(" ")[0],(message_path+command_number[1]),"{" +
+                    (updateName?String.format("\n\t\"sender\":\"%s\"%s",name,updateMessage?",":""):"") +
+                    (updateMessage?String.format("\n\t\"message\": \"%s\"",msg):"") +
                     "\n}"};
         }else if(command.startsWith("delete")){
             boolean testings[] = testCommands(command,6,"delete",true,true,true);

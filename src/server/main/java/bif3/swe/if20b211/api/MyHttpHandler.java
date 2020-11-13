@@ -309,7 +309,149 @@ public class MyHttpHandler {
         br.close();
         writer.close();
 
-        System.out.println("Finished GET-Request");
+        System.out.println("Finished POST-Request");
+        return response;
+    }
+
+    public String DELETE(String path, String ... args) throws IOException {
+        String response = "";
+        System.out.println("Path is: " + path);
+
+        socket = new Socket(host,port);
+        socket.setSoTimeout(sTimeout); //TODO Get settimeout out of this function
+        SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+        //Define Request
+        String hostHeader = "Host: " + (customHostForNextRequest == null? host:customHostForNextRequest);
+        customHostForNextRequest = null;
+        //Add params if defined
+        String arguments = "";
+        for(String arg : args) arguments += arg + "&";
+        //Define complete Request
+        String httpRequest = String.format("DELETE %s%s HTTP/1.1",path,args.length > 0? ("?"+arguments.substring(0,arguments.length()-1)):arguments);
+        System.out.println("reqeust: " + httpRequest);
+        writer.write(false,httpRequest,hostHeader);
+        //Write Head data
+        HashMap<String,String> allHeaders = new HashMap<String, String>();
+        allHeaders.putAll(defaultHeader);
+        allHeaders.putAll(optionalHeader);
+        Iterator it = allHeaders.entrySet().iterator();
+        while(it.hasNext()){
+            Map.Entry pair = (Map.Entry)it.next();
+            writer.write(false,(pair.getKey().toString() + pair.getValue().toString()));
+            it.remove(); // avoids a ConcurrentModificationException
+        }
+
+        //Declare end of HEAD
+        writer.newLine();
+        //Add body if defined
+        writer.flush();
+
+        //Read headers
+        String t = br.readLine();
+        int cl = 0;
+        while(!t.isEmpty()){
+            response += t + "\n";
+            //Directly save Content-Length
+            if(t.indexOf(":") != -1)
+                if(t.substring(0,t.indexOf(":")).equals("Content-Length")) cl = Integer.parseInt(t.substring(t.indexOf(":")+1).trim());
+            t = br.readLine();
+        }
+        //Adding seperater between HEAD and BODY
+        response += "\n";
+        //Read body
+        //first part of condition skips the line break. t goes out of the upper loop with the value: \n
+        //Then going on to the body until the body is null (If now body, it will skip.
+        /*
+        char[] buf = new char[cl];
+        System.out.println(br.read(buf));
+        for(int i = 0; i < cl; i++)
+            response += buf[i];
+            buf = null;
+        */
+        int read_chars = 0;
+        while((t = br.readLine()) != null){
+            response += t + "\n";
+            read_chars += t.length()+1; //plus one because line break isn't count as length but is counted inside Content-Length
+            System.out.println(read_chars +" - " + cl);
+            if(read_chars >= cl) break;
+        }
+        br.close();
+        writer.close();
+
+        System.out.println("Finished DELETE-Request");
+        return response;
+    }
+
+    public String PUT(String path, String body, String ... args) throws IOException {
+        String response = "";
+        socket = new Socket(host,port);
+        socket.setSoTimeout(sTimeout); //TODO Get settimeout out of this function
+        SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+        //Define Request
+        String hostHeader = "Host: " + (customHostForNextRequest == null? host:customHostForNextRequest);
+        customHostForNextRequest = null;
+        //Add params if defined
+        String arguments = "";
+        for(String arg : args) arguments += arg + "&";
+        //Define complete Request
+        String httpRequest = String.format("PUT %s%s HTTP/1.1",path,args.length > 0? ("?"+arguments.substring(0,arguments.length()-1)):arguments);
+        writer.write(false,httpRequest,hostHeader);
+
+        //Write Head data
+        addOptionalHeader(new String[]{"Content-Length: ", Integer.toString(body.length())});
+        HashMap<String,String> allHeaders = new HashMap<String, String>();
+        allHeaders.putAll(defaultHeader);
+        allHeaders.putAll(optionalHeader);
+        Iterator it = allHeaders.entrySet().iterator();
+        while(it.hasNext()){
+            Map.Entry pair = (Map.Entry)it.next();
+            writer.write(false,(pair.getKey().toString() + pair.getValue().toString()));
+            it.remove(); // avoids a ConcurrentModificationException
+        }
+
+        //Declare end of HEAD
+        writer.newLine();
+        //Add body if defined
+        writer.write(false,body);
+        writer.flush();
+
+        //Read headers
+        String t = br.readLine();
+        int cl = 0;
+        while(!t.isEmpty()){
+            response += t + "\n";
+            //Directly save Content-Length
+            if(t.indexOf(":") != -1)
+                if(t.substring(0,t.indexOf(":")).equals("Content-Length")) cl = Integer.parseInt(t.substring(t.indexOf(":")+1).trim());
+            t = br.readLine();
+        }
+        //Adding seperater between HEAD and BODY
+        response += "\n";
+        //Read body
+        //first part of condition skips the line break. t goes out of the upper loop with the value: \n
+        //Then going on to the body until the body is null (If now body, it will skip.
+        /*
+        char[] buf = new char[cl];
+        System.out.println(br.read(buf));
+        for(int i = 0; i < cl; i++)
+            response += buf[i];
+            buf = null;
+        */
+        int read_chars = 0;
+        while((t = br.readLine()) != null){
+            response += t + "\n";
+            read_chars += t.length()+1; //plus one because line break isn't count as length but is counted inside Content-Length
+            System.out.println(read_chars +" - " + cl);
+            if(read_chars >= cl) break;
+        }
+        br.close();
+        writer.close();
+
+        System.out.println("Finished POST-Request");
         return response;
     }
 }

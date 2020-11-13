@@ -110,6 +110,7 @@ public class HandleRequest {
                     getContentOf(path,args);
                     if(status != 404 && request.http_method.equals(HTTPFormat.Http_Method.PUT)){
                         System.out.println("Inside restricted area");
+                        System.out.println(getContentOf(path,args));
                         setStatus(405,"Method Not Allowed - Trying to overwrite existing message. Use PATCH/PUT instead.");
                         lock.unlock();
                         return this.errorMessage;
@@ -217,10 +218,10 @@ public class HandleRequest {
             resp += isIndex?"":"}\n";
         }catch (FileNotFoundException e){
             setStatus(404, e.toString());
-            return String.format("{errorMessage:{%s}}",this.errorMessage);
+            return String.format("{\"errorMessage\":{\"%s\"}}",this.errorMessage);
         }catch (NullPointerException e){
             setStatus(404, e.toString());
-            return String.format("{errorMessage:{%s}}",this.errorMessage);
+            return String.format("{\"errorMessage\":{\"%s\"}}",this.errorMessage);
         }
         return resp;
     }
