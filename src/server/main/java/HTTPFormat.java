@@ -239,7 +239,7 @@ public class HTTPFormat {
          * @param mimeType
          */
         public Body(String body,String mimeType) {
-            this.mimeType = mimeType.isEmpty() || mimeType == null? "text/plain":mimeType;
+            this.mimeType = mimeType == null || mimeType.isEmpty()? "text/plain":mimeType;
             //Considering plain text:
             this.body_string = body;
         }

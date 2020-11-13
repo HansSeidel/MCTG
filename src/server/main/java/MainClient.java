@@ -51,7 +51,7 @@ public class MainClient {
                         response = handler.GET(command[1]);
                         break;
                     case "send":
-                        //response = handler.POST(command[1],command[2]);
+                        response = handler.POST(command[1],command[2]);
                         break;
                     case "update":
                         //response = handler.PUT(command[1],command[2]);
@@ -115,12 +115,12 @@ public class MainClient {
                     if(tmp_msg.equals("finish")) break;
                     msg += tmp_msg;
                 } while (true);
-                if(msg.isEmpty()) {
-                    System.out.println("Seems like you haven't entered a messages. Command aborted");
-                    return null;
-                }
-                return new String[] {command,message_path,String.format("{\n\t\"sender\":{\"%s\"},\n\t\"message\": \"%s\""),name,msg};
             }
+            if(msg.isEmpty()) {
+                System.out.println("Seems like you haven't entered a messages. Command aborted");
+                return null;
+            }
+            return new String[] {command,message_path,String.format("{\n\t\"sender\":{\"%s\"},\n\t\"message\": \"%s\"",name,msg)};
         }else if (command.startsWith("update")){
             boolean updateName;
             boolean updateMessage;
@@ -141,6 +141,7 @@ public class MainClient {
             System.out.println("Enter your message or null or blank if you don't want to update the message (For multiline Messages enter \"mlm\"):");
             String msg = br.readLine().trim();
             if(!(updateMessage = msg.isEmpty() || msg.equals("null"))){
+                updateMessage = true;
                 if(msg.equalsIgnoreCase("mlm")){
                     msg = "";
                     System.out.println("You activated multiline input. You may type your message line by line but it won't be used with line breaks.");
@@ -151,10 +152,10 @@ public class MainClient {
                         if(tmp_msg.equals("finish")) break;
                         msg += tmp_msg;
                     } while (true);
-                    if(msg.isEmpty()) {
-                        System.out.println("Seems like you haven't entered a messages. Command aborted");
-                        return null;
-                    }
+                }
+                if(msg.isEmpty()) {
+                    System.out.println("Seems like you haven't entered a messages. Command aborted");
+                    return null;
                 }
             }
             if(updateMessage && updateName){
@@ -177,7 +178,6 @@ public class MainClient {
             System.out.println("Unknown command. Write quit to exit connection");
             return null;
         }
-        return null;
     }
 
 
