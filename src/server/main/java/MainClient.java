@@ -33,19 +33,35 @@ public class MainClient {
 
 
         try{
-            //TODO Write following use cases:
-            String command[] = null;
-            do{
-                command = getCommandFormatFromConsole();
-            }while (command == null);
-            if(command.equals("quit")) return;
-
-
-            //TODO Write many tests for this method
-            MyHttpHandler handler = new MyHttpHandler(HOST,PORT);
-            //handler.addOptionalHeader(new String[]{"Connection: ", "Keep-Alive"}); Chrashes programm
-            String response = handler.GET("/api/structure.json");
-            System.out.println(String.format("Response: %s",response));
+            while (true){
+                //TODO Write following use cases:
+                String command[] = null;
+                do{
+                    command = getCommandFormatFromConsole();
+                }while (command == null);
+                if(command[0].equals("quit")) break;
+                //Comands to handle: struct,                        list,   list x,     send,   update x,   delete x
+                //Inside command[]: ["struct"]["/api/structure"], ["list"],["/messages/"], etc
+                MyHttpHandler handler = new MyHttpHandler(HOST,PORT);
+                String response = "";
+                switch (command[0]){
+                    case "struct":
+                    case "list":
+                        System.out.println("Requesting follwoing:" + command[1]);
+                        response = handler.GET(command[1]);
+                        break;
+                    case "send":
+                        //response = handler.POST(command[1],command[2]);
+                        break;
+                    case "update":
+                        //response = handler.PUT(command[1],command[2]);
+                        break;
+                    case "delete":
+                        //response = handler.DELETE(command[1]);
+                        break;
+                }
+                System.out.println(String.format("Response: %s",response));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -69,10 +85,17 @@ public class MainClient {
             return new String[]{"list",api_structure_path};
         }else if(command.startsWith("list")){
             //Check if user wants to list all messages
-            boolean testings[] = testCommands(command,4,"list",false,true,true);
-            if(testings[0]) return new String[] {command,message_path};
-            if(!testings[1]||!testings[2]) return null;
-            return new String[] {command,(message_path + command.split(" ")[1])};
+            boolean testings[] = testCommands(command,4,"list",true,true,true);
+            if(testings[0]){
+                System.out.println(String.format("Returning the following: {%s},{%s}",command,message_path));
+                return new String[] {command,message_path};
+            }
+            if(!testings[1]||!testings[2]) {
+                System.out.println("Returning null");
+                return null;
+            }
+            System.out.println("Returning the following: " + message_path + command.split(" ")[1]);
+            return new String[] {command.split(" ")[0],(message_path + command.split(" ")[1])};
         }else if (command.equals("send")){
             System.out.println("Enter senders name(max chars. 255):");
             String name = br.readLine().trim();
@@ -146,7 +169,7 @@ public class MainClient {
             boolean testings[] = testCommands(command,6,"delete",true,true,true);
             if(testings[0]||!testings[1]||!testings[2]) return null;
 
-            return new String[]{command,message_path+command.split(" ")[1]};
+            return new String[]{command.split(" ")[0],message_path+command.split(" ")[1]};
         }else if(command.equals("quit")){
             br.close();
             return new String[]{"quit"};
@@ -161,6 +184,7 @@ public class MainClient {
     /**
      * Returning three bool parameters:<p></p>
      *      First bool returns true if the input String is the exact same length as the expected_length.<p>
+     *          If first bool is true, second and third bool aren't checked. They will return false without errormessage.
      *      Second bool returns true if the input String consists of the format: "input number"<p>
      *      Third bool returns true if the expected number is parseable.<p>
      *      Using correct_command to write the error messages.
@@ -180,17 +204,20 @@ public class MainClient {
         if(input.length() == expected_length) {
             if(print_messages[0])System.out.println("Seems you've written the command wrong. Similar commands: <"+correct_command+" n>");
             testings[0] = true;
-        }
-        String[] command_number = input.split(" ");
-        if(command_number.length != 2){
-            if(print_messages[1])System.out.println("Seems you've written the command wrong. Similar commands: <"+correct_command+"> <"+correct_command+" n>");
             testings[1] = false;
-        }
-        try{
-            Integer.parseInt(command_number[1]);
-        }catch(NumberFormatException e){
-            if(print_messages[2])System.err.println("Expected <"+correct_command+" x> x to be type of Integer. Got another type.");
             testings[2] = false;
+        }else{
+            String[] command_number = input.split(" ");
+            if(command_number.length != 2){
+                if(print_messages[1])System.out.println("Seems you've written the command wrong. Similar commands: <"+correct_command+"> <"+correct_command+" n>");
+                testings[1] = false;
+            }
+            try{
+                Integer.parseInt(command_number[1]);
+            }catch(NumberFormatException e){
+                if(print_messages[2])System.err.println("Expected <"+correct_command+" x> x to be type of Integer. Got another type.");
+                testings[2] = false;
+            }
         }
         return testings;
     }
