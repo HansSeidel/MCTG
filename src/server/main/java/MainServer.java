@@ -1,5 +1,5 @@
-import bif3.swe.if20b211.api.SimpleBufferedWriter;
 import bif3.swe.if20b211.http.Format;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -22,7 +22,22 @@ public class MainServer implements Runnable {
 
     public static void main(String[] args) {
         System.out.println("start server");
+/*
+        try {
+            JsonNode node = Json_form.parse(new File(System.getProperty("user.dir") + "/messages/testMessage.json"));
+            Message messages = Json_form.fromJson(node,Message.class);
 
+            System.out.println("message id: " + messages.getId());
+            System.out.println("sender id: " + messages.getSender());
+            System.out.println("message id: " + messages.getMessage());
+
+            messages.setSender("Hans");
+            System.out.println("Processing writing: " + Json_form.write(System.getProperty("user.dir") + "/messages/testMessage.json",Json_form.toJson(messages)));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        */
         try {
             _listener = new ServerSocket(8000, 5);
         } catch (IOException e) {
@@ -35,10 +50,12 @@ public class MainServer implements Runnable {
         try {
             while (true) {
                 Socket s = _listener.accept();
+                //Was soll nun alles getestet werden:
                 String client_string = getClientString(s);
                 Format client_http_format = new Format(client_string);
                 System.out.println("Headers: " + client_http_format.getHeaders());
-                System.out.println("Connection type: " + client_http_format.getHeaderValueByName("Connection"));
+                System.out.println("Connection type: " + client_http_format.getValueOfStringHashMap(client_http_format.getHeaders(),"Connection"));
+
                 //System.out.println("client_http_format to string: " +client_http_format.toString());
                 //SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(s.getOutputStream()));
 

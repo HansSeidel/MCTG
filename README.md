@@ -6,7 +6,34 @@ Keep in mind, that you only can acces the moodle if you are a memeber of the FHT
 
 ####Requirements:
 Java version: [15](https://www.chip.de/downloads/Java-SDK-64-Bit_47299013.html)
+<br>
+Jackson: Marve implementation:
+<br>
+__<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-core</artifactId>
+    <version>2.9.6</version>
+</dependency>:__
+```
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-core</artifactId>
+    <version>2.9.6</version>
+</dependency>
+```
+__<dependency>
+   <groupId>com.fasterxml.jackson.core</groupId>
+   <artifactId>jackson-databind</artifactId>
+   <version>2.9.6</version>
+</dependency>:__
 
+```
+<dependency>
+   <groupId>com.fasterxml.jackson.core</groupId>
+   <artifactId>jackson-databind</artifactId>
+   <version>2.9.6</version>
+</dependency>
+```
 #### Setup:
 This repository is based on a project create by a professor of the above mentioned University.
 To take a look at the his project you might visit: [Daniel Kienböck: Server-Client example in github](https://github.com/kienboec/ClientServerSampleInJava.git).

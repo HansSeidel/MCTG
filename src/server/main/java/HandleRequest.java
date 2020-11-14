@@ -63,7 +63,7 @@ public class HandleRequest {
                 }
                 try {
                     if(!file.delete()) throw new IOException();
-                    setStatus(200,"OK - Message deleted");
+                    setStatus(200,"OK - bif3.swe.if20b211.api.Message deleted");
                     return this.errorMessage;
                 }catch (SecurityException e){
                     setStatus(500, String.format("Internal Server Error - Please contact the administrator: %s", e.toString()));
@@ -231,7 +231,7 @@ public class HandleRequest {
         this.errorMessage = e.toString();
     }
     public String getStatusString(){
-        return String.format("Status Code is: %d; Status Message is: %s",this.status, this.errorMessage);
+        return String.format("Status Code is: %d; Status bif3.swe.if20b211.api.Message is: %s",this.status, this.errorMessage);
     }
     public boolean correctFormat() {
         return status >= 200 && status < 300;

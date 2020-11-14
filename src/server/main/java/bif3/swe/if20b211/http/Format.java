@@ -1,9 +1,12 @@
 package bif3.swe.if20b211.http;
 
+import bif3.swe.if20b211.Json_form;
+import bif3.swe.if20b211.api.Message;
+
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class Format {
     //Public variables
@@ -16,7 +19,9 @@ public class Format {
     private Http_Format_Type type;
     private Http_Method method;
     private HashMap<String,String> headers = new HashMap<>();
-    //private Body body;
+    private Body body;
+    private String path;
+    private HashMap<String,String> arguments = new HashMap<>();
 
     //constructors
     public Format(String s){
@@ -31,25 +36,47 @@ public class Format {
         type = getTypeAndCheckHTTPVersion(request_splitted[0]);
         if(type.equals(Http_Format_Type.REQUEST)){
             method = getHttpMethod(request_splitted[0]);
-        }
-        headers = setHeadersInitial(request_splitted[1]);
 
-        /*
-        if(request_splitted[2] != null){
-            body = new Body(request_splitted[2],getHeaderByName("Content-Type"));
+            String[] path_args = getPathAndArgumentsSplitted(request_splitted[0]);
+            if(path_args.length > 2){
+                setStatus(400, "Bad Request - Too many argument indicators");
+                return;
+            }
+            path = path_args[0];
+            arguments = path_args.length < 2? null:generateStringKeyValueMapByDelimiters(path_args[1],"&","=");
         }
-        */
+        headers = generateStringKeyValueMapByDelimiters(request_splitted[1],"\\n",":");
+
+        if(request_splitted[2] != null){
+            try {
+                body = new Body(request_splitted[2], getValueOfStringHashMap(this.headers,"Content-Type"));
+            } catch (IOException e) {
+                setStatus(400, "Bad Request - Expected Json but couldn't parse body into json.");
+                body = null;
+            }
+        }
+        System.out.println("Request Brought to format");
     }
 
     /**
-     * Splits the headers into a key value map and returns this map.
+     * Generates a HashMap<String,String> out of a String. It the entries by delimiter1 and the key/value pairs by delimiter2
      * @param s
+     * @param delimiter1
+     * @param delimiter2
      * @return
      */
-    private HashMap<String, String> setHeadersInitial(String s) {
-        HashMap<String,String> res = new HashMap<>();
-        Arrays.stream(s.split("\\n")).distinct().forEach(line -> res.put(line.split(":")[0].trim(),line.split(":")[1].trim()));
+    private HashMap<String,String> generateStringKeyValueMapByDelimiters(String s, String delimiter1, String delimiter2){
+        HashMap<String,String > res = new HashMap<>();
+        Arrays.stream(s.split(delimiter1)).distinct().forEach(line -> res.put(line.split(delimiter2)[0].trim(),line.split(delimiter2)[1].trim()));
         return res;
+    }
+
+    private String[] getPathAndArgumentsSplitted(String s) {
+        //Change format to backslashes
+        String res = s.indexOf('/') != -1? s.replace('/','\\').trim():s.trim();
+        //Returning index.html if request was / or empty
+        if((s.indexOf('/') == -1 && s.indexOf('\\') == -1)|| s.length() == 1)return new String[]{"index.html"};
+        return res.split("\\?");
     }
 
     /**
@@ -137,7 +164,8 @@ public class Format {
     //Getter / Setter
     public int getStatus(){ return status;}
     public String getErrorMessage(){return error_message;}
-    public String getHeaders(){ return headers.toString(); }
+    public HashMap<String, String> getHeaders(){ return headers; }
+    public String getHeadersToString(){ return headers.toString(); }
 
     //Specific getters
     /**
@@ -145,8 +173,8 @@ public class Format {
      * @param name
      * @return
      */
-    public String getHeaderValueByName(String name){
-        return this.headers.entrySet().stream().filter(e -> name.equalsIgnoreCase(e.getKey())).map(Map.Entry::getValue).findFirst().orElse(null);
+    public String getValueOfStringHashMap(HashMap<String,String> map, String name){
+        return map.entrySet().stream().filter(e -> name.equalsIgnoreCase(e.getKey())).map(Map.Entry::getValue).findFirst().orElse(null);
     }
 
     @Override
@@ -159,10 +187,54 @@ public class Format {
                 '}';
     }
 
+    //Additional Types
     enum Http_Format_Type{
         REQUEST, RESPONSE
     }
     enum Http_Method {
         GET, POST, PATCH, PUT, DELETE, HEAD, CONNECT, OPTION, TRACE
+    }
+
+    /**
+     * Body is a nested class to format the Body in a specific format depending on the MIME-TYPE.
+     * <p>
+     * It provides multiple function which allow the User of this class to work with the body by expected content
+     * instead of splitting it up all by hand.
+     *
+     */
+    class Body{
+        public final String mimeType;
+        private final String bare_body;
+        private final Message json_format;
+        
+        /**
+         *
+         * @param body
+         * @param mimeType
+         */
+        public Body(String body,String mimeType) throws IOException {
+            this.bare_body = body;
+            if(mimeType.startsWith("application/json")){
+                this.mimeType = mimeType;
+                json_format = Json_form.fromJson(Json_form.parse(body), Message.class);
+
+            }else{
+                //Considering plain text:
+                this.mimeType = mimeType == null || mimeType.isEmpty()? "text/plain":mimeType;
+                json_format = null;
+            }
+        }
+
+        public String toString(){
+            return bare_body;
+        }
+
+        public Message getJson_format() {
+            return json_format;
+        }
+
+        public String getMimeType(){
+            return mimeType;
+        }
     }
 }

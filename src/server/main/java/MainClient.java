@@ -103,7 +103,7 @@ public class MainClient {
                 System.out.println("You have either entered nothing or wrote to many characters. Command aborted");
                 return null;
             }
-            System.out.println("Enter your message (For multiline Messages enter \"mlm\"):");
+            System.out.println("Enter your message (For multiline bif3.swe.if20b211.api.Messages enter \"mlm\"):");
             String msg = br.readLine().trim();
             if(msg.equalsIgnoreCase("mlm")){
                 msg = "";
@@ -138,7 +138,7 @@ public class MainClient {
             }
             updateName = !(name.isEmpty() || name.equalsIgnoreCase("null"));
 
-            System.out.println("Enter your message or null or blank if you don't want to update the message (For multiline Messages enter \"mlm\"):");
+            System.out.println("Enter your message or null or blank if you don't want to update the message (For multiline bif3.swe.if20b211.api.Messages enter \"mlm\"):");
             String msg = br.readLine().trim();
             updateMessage = !(msg.isEmpty() || msg.equals("null"));
             if(updateMessage){
