@@ -1,4 +1,6 @@
+import bif3.swe.if20b211.Json_form;
 import bif3.swe.if20b211.api.Message;
+import bif3.swe.if20b211.api.Messages;
 import bif3.swe.if20b211.http.Format;
 
 import java.io.*;
@@ -53,16 +55,19 @@ public class MainServer implements Runnable {
                 Socket s = _listener.accept();
                 //Was soll nun alles getestet werden:
                 String client_string = getClientString(s);
-                Format client_http_format = new Format(client_string);
-                System.out.println("Format.toString() - " + client_http_format.toString());
+                Format request = new Format(client_string);
+                System.out.println("Format.toString() - " + request.toString());
 
-                Format.Body body = client_http_format.getBody();
+                Format.Body body = request.getBody();
                 try{
                     Message m = body.toObjectExpectingJson(Message.class);
                     System.out.println("Parsing is done. Got following: Message id: " + m.getId() + " Sender: " + m.getSender() + " Message: " + m.getMessage());
                 }catch (NullPointerException e){
                     System.out.println("Body is null");
                 }
+                String response = fullfill(request);
+                System.out.println("response is: ----------- " + response);
+                write(response,s);
 
                 //client_http_format.debug(); --> !!!Crashes the programm (on purpose)
 
@@ -82,6 +87,37 @@ public class MainServer implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void write(String response, Socket s) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
+        writer.write(response);
+        writer.flush();
+    }
+
+    private static String fullfill(Format request) throws IOException {
+
+        switch (request.getMethod()){
+            case GET: return HandleRequest.GET(request.getPath()).BARE_STRING;
+            case POST:
+                break;
+            case PATCH:
+                break;
+            case PUT:
+                break;
+            case DELETE:
+                break;
+            case HEAD:
+                break;
+            case CONNECT:
+                break;
+            case OPTION:
+                break;
+            case TRACE:
+                break;
+        }
+        System.out.println("No httpmethod");
+        return null;
     }
 
     /**

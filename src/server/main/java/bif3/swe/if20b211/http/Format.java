@@ -13,13 +13,14 @@ import java.util.Map;
 
 public class Format {
     //Public variables
-    public final String BARE_STRING;
+    public String BARE_STRING;
 
     //Private varibales
     private int status = 200;
     private String error_message = "NoError";
     private int error_counter = 0;
     private Http_Format_Type type;
+
     private Http_Method method;
     private HashMap<String,String> headers = new HashMap<>();
 
@@ -28,6 +29,46 @@ public class Format {
     private HashMap<String,String> arguments = new HashMap<>();
 
     //constructors
+
+    public Format(int i, String s,String mime_type){
+        this.status = i;
+        boolean isError = i < 200 || i >= 300;
+        this.error_message = isError?s:this.error_message;
+        this.error_counter = isError?-1:this.error_counter;
+        this.type = Http_Format_Type.RESPONSE;
+        this.method = null;
+        addDefaultHeaders();
+        if(isError){
+            this.body = new Body(String.format("{\"error_message\":\"%s\"}",s),mime_type != null?mime_type:"application/json");
+        }else {
+            this.body = new Body(s,mime_type != null?mime_type:"text/plain");
+        }
+
+        this.path = null;
+        this.arguments = null;
+        this.BARE_STRING = buildFormat();
+    }
+
+    private String buildFormat() {
+        overwriteHeader("Content-Lenght",Integer.toString(body.getLength()));
+        String res = null;
+        if(this.type.equals(Http_Format_Type.RESPONSE)){
+            String status = this.status >= 200 && this.status < 300? "OK":"ERR";
+            res = String.format("HTTP/1.1 %d %s\n",this.status,status);
+            for (Map.Entry<String, String> entry:this.headers.entrySet())
+                res += String.format("%s: %s\n", entry.getKey(), entry.getValue());
+            res += "\n";
+            res += body.toString();
+        }
+        System.out.println("Build complete with result: " + res);
+        return res;
+    }
+
+    private void addDefaultHeaders() {
+        addHeader("Accept","text/html");
+        addHeader("Accept-Language","de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7");
+    }
+
     public Format(String s){
         BARE_STRING = s;
         if(s.isEmpty() || s == null) {
@@ -163,10 +204,16 @@ public class Format {
     }
     //Getter / Setter
     public int getStatus(){ return status;}
+    public String getPath() { return path;}
     public String getErrorMessage(){return error_message;}
     public HashMap<String, String> getHeaders(){ return headers; }
+    public void addHeader(String header, String value){this.headers.put(header,value);}
+    public void overwriteHeader(String header, String value){
+        this.headers.remove(header);
+        this.addHeader(header,value);
+    }
     public String getHeadersToString(){ return headers.toString(); }
-
+    public Http_Method getMethod() {return method;}
     //Specific getters
     /**
      * Returns the given value to the key <name> or null, if not exists.
@@ -213,10 +260,10 @@ public class Format {
     }
 
     //Additional Types
-    enum Http_Format_Type{
+    public enum Http_Format_Type{
         REQUEST, RESPONSE
     }
-    enum Http_Method {
+    public enum Http_Method {
         GET, POST, PATCH, PUT, DELETE, HEAD, CONNECT, OPTION, TRACE
     }
 
@@ -295,6 +342,10 @@ public class Format {
 
         public String getMimeType(){
             return mimeType;
+        }
+
+        public int getLength() {
+            return bare_body.length();
         }
     }
 }
