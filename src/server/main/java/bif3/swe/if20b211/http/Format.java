@@ -30,6 +30,18 @@ public class Format {
 
     //constructors
 
+    /**
+     * If you use this method, you have to run buildFormat(), bevore using the object.
+     * @param response
+     */
+    public Format(Http_Format_Type response) {
+        this.type = response;
+        this.method = null;
+        this.path = null;
+        this.arguments = null;
+        addDefaultHeaders();
+    }
+
     public Format(int i, String s,String mime_type){
         this.status = i;
         boolean isError = i < 200 || i >= 300;
@@ -49,7 +61,7 @@ public class Format {
         this.BARE_STRING = buildFormat();
     }
 
-    private String buildFormat() {
+    public String buildFormat() {
         overwriteHeader("Content-Lenght",Integer.toString(body.getLength()));
         String res = null;
         if(this.type.equals(Http_Format_Type.RESPONSE)){
@@ -57,10 +69,12 @@ public class Format {
             res = String.format("HTTP/1.1 %d %s\n",this.status,status);
             for (Map.Entry<String, String> entry:this.headers.entrySet())
                 res += String.format("%s: %s\n", entry.getKey(), entry.getValue());
+        }
+        if(body != null){
             res += "\n";
             res += body.toString();
         }
-        System.out.println("Build complete with result: " + res);
+        this.BARE_STRING = res;
         return res;
     }
 
@@ -95,7 +109,6 @@ public class Format {
         if(request_splitted[2] != null){
             body = new Body(request_splitted[2], getValueOfStringHashMap(this.headers,"Content-Type"));
         }
-        System.out.println("Request Brought to format");
     }
 
     /**
@@ -207,6 +220,7 @@ public class Format {
     public String getPath() { return path;}
     public String getErrorMessage(){return error_message;}
     public HashMap<String, String> getHeaders(){ return headers; }
+    public HashMap<String, String> getArguments () {return arguments;}
     public void addHeader(String header, String value){this.headers.put(header,value);}
     public void overwriteHeader(String header, String value){
         this.headers.remove(header);
@@ -221,7 +235,7 @@ public class Format {
      * @return
      */
     public String getValueOfStringHashMap(HashMap<String,String> map, String name){
-        return map.entrySet().stream().filter(e -> name.equalsIgnoreCase(e.getKey())).map(Map.Entry::getValue).findFirst().orElse(null);
+        return map == null?null:map.entrySet().stream().filter(e -> name.equalsIgnoreCase(e.getKey())).map(Map.Entry::getValue).findFirst().orElse(null);
     }
 
     @Override
@@ -271,8 +285,9 @@ public class Format {
         return body;
     }
 
-    public void setBody(Body body) {
-        this.body = body;
+    public void setBody(String body, String mimeType) {
+        System.out.println("Inside set Body with string: " + body);
+        this.body = new Body(body, mimeType);
     }
 
     /**

@@ -1,9 +1,18 @@
 package bif3.swe.if20b211.api;
 
 public class Message {
+    private boolean gone = false;
     private int id;
     private String sender;
     private String message;
+
+    public boolean isGone() {
+        return gone;
+    }
+
+    private void setGone(boolean gone) {
+        this.gone = gone;
+    }
 
     public int getId() {
         return id;

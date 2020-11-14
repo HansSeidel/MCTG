@@ -98,7 +98,7 @@ public class MainServer implements Runnable {
     private static String fullfill(Format request) throws IOException {
 
         switch (request.getMethod()){
-            case GET: return HandleRequest.GET(request.getPath()).BARE_STRING;
+            case GET: return HandleRequest.GET(request).BARE_STRING;
             case POST:
                 break;
             case PATCH:
