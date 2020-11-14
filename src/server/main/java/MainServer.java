@@ -1,3 +1,4 @@
+import bif3.swe.if20b211.api.Message;
 import bif3.swe.if20b211.http.Format;
 
 import java.io.*;
@@ -53,8 +54,17 @@ public class MainServer implements Runnable {
                 //Was soll nun alles getestet werden:
                 String client_string = getClientString(s);
                 Format client_http_format = new Format(client_string);
-                System.out.println("Headers: " + client_http_format.getHeaders());
-                System.out.println("Connection type: " + client_http_format.getValueOfStringHashMap(client_http_format.getHeaders(),"Connection"));
+                System.out.println("Format.toString() - " + client_http_format.toString());
+
+                Format.Body body = client_http_format.getBody();
+                try{
+                    Message m = body.toObjectExpectingJson(Message.class);
+                    System.out.println("Parsing is done. Got following: Message id: " + m.getId() + " Sender: " + m.getSender() + " Message: " + m.getMessage());
+                }catch (NullPointerException e){
+                    System.out.println("Body is null");
+                }
+
+                //client_http_format.debug(); --> !!!Crashes the programm (on purpose)
 
                 //System.out.println("client_http_format to string: " +client_http_format.toString());
                 //SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(s.getOutputStream()));

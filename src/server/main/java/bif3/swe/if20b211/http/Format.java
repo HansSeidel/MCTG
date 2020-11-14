@@ -2,6 +2,9 @@ package bif3.swe.if20b211.http;
 
 import bif3.swe.if20b211.Json_form;
 import bif3.swe.if20b211.api.Message;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -19,6 +22,7 @@ public class Format {
     private Http_Format_Type type;
     private Http_Method method;
     private HashMap<String,String> headers = new HashMap<>();
+
     private Body body;
     private String path;
     private HashMap<String,String> arguments = new HashMap<>();
@@ -48,12 +52,7 @@ public class Format {
         headers = generateStringKeyValueMapByDelimiters(request_splitted[1],"\\n",":");
 
         if(request_splitted[2] != null){
-            try {
-                body = new Body(request_splitted[2], getValueOfStringHashMap(this.headers,"Content-Type"));
-            } catch (IOException e) {
-                setStatus(400, "Bad Request - Expected Json but couldn't parse body into json.");
-                body = null;
-            }
+            body = new Body(request_splitted[2], getValueOfStringHashMap(this.headers,"Content-Type"));
         }
         System.out.println("Request Brought to format");
     }
@@ -72,8 +71,9 @@ public class Format {
     }
 
     private String[] getPathAndArgumentsSplitted(String s) {
+        //Taking the path position  s.split(" ")[1]
         //Change format to backslashes
-        String res = s.indexOf('/') != -1? s.replace('/','\\').trim():s.trim();
+        String res = s.indexOf('/') != -1?  s.split(" ")[1].replace('/','\\').trim(): s.split(" ")[1].trim();
         //Returning index.html if request was / or empty
         if((s.indexOf('/') == -1 && s.indexOf('\\') == -1)|| s.length() == 1)return new String[]{"index.html"};
         return res.split("\\?");
@@ -86,7 +86,7 @@ public class Format {
      * @return
      */
     private Http_Method getHttpMethod(String s) {
-        switch (s.split(" ")[2].toUpperCase()){
+        switch (s.split(" ")[0].toUpperCase()){
             case "GET":return Http_Method.GET;
             case "POST":return Http_Method.POST;
             case "PUT":return Http_Method.PUT;
@@ -179,12 +179,37 @@ public class Format {
 
     @Override
     public String toString() {
-        return "Format{" +
-                "BARE_STRING='" + BARE_STRING + '\'' +
-                ", status=" + status +
-                ", error_message='" + error_message + '\'' +
-                ", type=" + type +
-                '}';
+        if(status == 200){
+            return "Format{" +
+                    "BARE_STRING='" + BARE_STRING + '\'' +
+                    ", status=" + status +
+                    ", error_message='" + error_message + '\'' +
+                    ", error_counter=" + error_counter +
+                    ", type=" + type +
+                    ", method=" + method +
+                    ", headers=" + headers.toString() +
+                    ", body=" + (body == null?null:body.toString()) +
+                    ", path='" + path + '\'' +
+                    ", arguments=" + (arguments == null? null:arguments.toString()) +
+                    '}';
+        }else {
+            return "Format is not well formed. " +
+                    "Run debug() to see all values. " +
+                    "Debug() - function will crash if you see this response from toString()" +
+                    "Debug() - could also crash if you don't see this response";
+        }
+    }
+    public void debug(){
+        System.out.println("BARE_STRING='" + BARE_STRING + '\'');
+        System.out.println("status= " + status);
+        System.out.println("error_message= " + error_message);
+        System.out.println("error_counter= " + error_counter);
+        System.out.println("type= " + type);
+        System.out.println("method= " + method);
+        System.out.println("headers= " + headers.toString());
+        System.out.println("path= " + path);
+        System.out.println("arguments= " + arguments.toString());
+        System.out.println("body= " + body.toString());
     }
 
     //Additional Types
@@ -195,6 +220,14 @@ public class Format {
         GET, POST, PATCH, PUT, DELETE, HEAD, CONNECT, OPTION, TRACE
     }
 
+    public Body getBody() {
+        return body;
+    }
+
+    public void setBody(Body body) {
+        this.body = body;
+    }
+
     /**
      * Body is a nested class to format the Body in a specific format depending on the MIME-TYPE.
      * <p>
@@ -202,26 +235,22 @@ public class Format {
      * instead of splitting it up all by hand.
      *
      */
-    class Body{
+    public class Body{
         public final String mimeType;
         private final String bare_body;
-        private final Message json_format;
+        private Object json_format;
         
         /**
          *
          * @param body
          * @param mimeType
          */
-        public Body(String body,String mimeType) throws IOException {
+        public Body(String body,String mimeType) {
             this.bare_body = body;
-            if(mimeType.startsWith("application/json")){
-                this.mimeType = mimeType;
-                json_format = Json_form.fromJson(Json_form.parse(body), Message.class);
-
+            if(mimeType == null || mimeType.isEmpty()){
+                this.mimeType = "text/plain";
             }else{
-                //Considering plain text:
-                this.mimeType = mimeType == null || mimeType.isEmpty()? "text/plain":mimeType;
-                json_format = null;
+                this.mimeType = mimeType;
             }
         }
 
@@ -229,8 +258,39 @@ public class Format {
             return bare_body;
         }
 
-        public Message getJson_format() {
-            return json_format;
+        /**
+         * It is suggested to use this method with the control, if the mimeType is correct.
+         * <p>Returning null, if body is null
+         * @return
+         * @throws IOException
+         */
+        public JsonNode getJson_format() throws IOException {
+            return Json_form.parse(bare_body);
+        }
+
+        /**
+         * It is suggested to use this method with the control, if the mimeType is correct.
+         * <p>Returning null, if body is null
+         * @param node
+         * @param aClass
+         * @param <A>
+         * @return
+         * @throws JsonProcessingException
+         */
+        public <A> A fromJsonToObject(JsonNode node, Class<A> aClass) throws JsonProcessingException {
+            return Json_form.fromJson(node,aClass);
+        }
+
+        /**
+         * It is suggested to use this method with the control, if the mimeType is correct.
+         * <p>Returning null, if body is null
+         * @param aClass
+         * @param <A>
+         * @return
+         * @throws JsonProcessingException
+         */
+        public <A> A toObjectExpectingJson(Class<A> aClass) throws IOException {
+            return Json_form.fromJson(Json_form.parse(bare_body),aClass);
         }
 
         public String getMimeType(){
