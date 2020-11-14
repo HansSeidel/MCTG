@@ -37,6 +37,8 @@ public class MainServer implements Runnable {
                 Socket s = _listener.accept();
                 String client_string = getClientString(s);
                 Format client_http_format = new Format(client_string);
+                System.out.println("Headers: " + client_http_format.getHeaders());
+                System.out.println("Connection type: " + client_http_format.getHeaderValueByName("Connection"));
                 //System.out.println("client_http_format to string: " +client_http_format.toString());
                 //SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(s.getOutputStream()));
 

@@ -1,6 +1,8 @@
 package bif3.swe.if20b211.http;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class Format {
@@ -10,8 +12,11 @@ public class Format {
     //Private varibales
     private int status = 200;
     private String error_message = "NoError";
+    private int error_counter = 0;
     private Http_Format_Type type;
-
+    private Http_Method method;
+    private HashMap<String,String> headers = new HashMap<>();
+    //private Body body;
 
     //constructors
     public Format(String s){
@@ -24,11 +29,60 @@ public class Format {
         String[] request_splitted = splitIncome(s);
         if(getStatus() != 200) return;
         type = getTypeAndCheckHTTPVersion(request_splitted[0]);
-        for (String st: request_splitted) {
-            System.out.println(String.format("Curr. process: %s",st));
+        if(type.equals(Http_Format_Type.REQUEST)){
+            method = getHttpMethod(request_splitted[0]);
+        }
+        headers = setHeadersInitial(request_splitted[1]);
+
+        /*
+        if(request_splitted[2] != null){
+            body = new Body(request_splitted[2],getHeaderByName("Content-Type"));
+        }
+        */
+    }
+
+    /**
+     * Splits the headers into a key value map and returns this map.
+     * @param s
+     * @return
+     */
+    private HashMap<String, String> setHeadersInitial(String s) {
+        HashMap<String,String> res = new HashMap<>();
+        Arrays.stream(s.split("\\n")).distinct().forEach(line -> res.put(line.split(":")[0].trim(),line.split(":")[1].trim()));
+        return res;
+    }
+
+    /**
+     * Checks if the http method is known and if the http method is accepted by the server
+     * The second part should be removed, if this method should be used for more than only these cases.
+     * @param s
+     * @return
+     */
+    private Http_Method getHttpMethod(String s) {
+        switch (s.split(" ")[2].toUpperCase()){
+            case "GET":return Http_Method.GET;
+            case "POST":return Http_Method.POST;
+            case "PUT":return Http_Method.PUT;
+            case "DELETE":return Http_Method.DELETE;
+            case "PATCH":return Http_Method.PATCH;
+            case "HEAD":
+            case "CONNECT":
+            case "OPTIONS":
+            case "TRACE":
+                setStatus(405, "Method Not Allowed - This api does not suppored the requested method");
+                return null;
+            default:
+                setStatus(405, "Method Not Allowed - Method unknown");
+                return null;
         }
     }
 
+    /**
+     * Checks the type and the http version of the request or response.
+     * Changes the state if it is the wrong http version
+     * @param s
+     * @return
+     */
     private Http_Format_Type getTypeAndCheckHTTPVersion(String s) {
         String[] toCheck = s.split(" ");
         //Check if the last index is the HTTP version. If yes, it is a request. If not it is either a response or the wrong HTTPVersion
@@ -61,7 +115,6 @@ public class Format {
         res[1] = "";
         Arrays.stream(tmp[0].split("\\n")).skip(1).forEach(line -> {
             res[1] += line.trim()+"\n";
-            System.out.println("line: " + line);
         });
 
         //Check if body exists and safe it if so in res[2]
@@ -73,12 +126,28 @@ public class Format {
 
     //SetStatus function
     private void setStatus(int i, String s) {
-        this.status = i;
-        this.error_message = s;
+        if(status != 200){
+            this.error_message += String.format("There have been %d more errors which are not represented by this response.",error_counter);
+        }else{
+            this.status = i;
+            this.error_message = s;
+        }
+        error_counter++;
     }
     //Getter / Setter
     public int getStatus(){ return status;}
     public String getErrorMessage(){return error_message;}
+    public String getHeaders(){ return headers.toString(); }
+
+    //Specific getters
+    /**
+     * Returns the given value to the key <name> or null, if not exists.
+     * @param name
+     * @return
+     */
+    public String getHeaderValueByName(String name){
+        return this.headers.entrySet().stream().filter(e -> name.equalsIgnoreCase(e.getKey())).map(Map.Entry::getValue).findFirst().orElse(null);
+    }
 
     @Override
     public String toString() {
@@ -92,5 +161,8 @@ public class Format {
 
     enum Http_Format_Type{
         REQUEST, RESPONSE
+    }
+    enum Http_Method {
+        GET, POST, PATCH, PUT, DELETE, HEAD, CONNECT, OPTION, TRACE
     }
 }
