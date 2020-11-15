@@ -11,13 +11,16 @@ public class Message {
     private String sender;
     private String message;
 
-    @JsonIgnore
     public boolean isGone() {
         return gone;
     }
 
-    @JsonProperty
-    private void setGone(boolean gone) {
+    @JsonIgnore
+    public boolean isNotGone(){
+        return !gone;
+    }
+
+    public void setGone(boolean gone) {
         this.gone = gone;
     }
 

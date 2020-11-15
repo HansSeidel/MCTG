@@ -1,10 +1,10 @@
 package bif3.swe.if20b211.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class Messages {
@@ -49,5 +49,27 @@ public class Messages {
     @JsonIgnore
     public void addMessage(Message m) {
         messages.add(m);
+    }
+
+    @JsonIgnore
+    public void changeMessage(Message m) {
+        deleteMessageById(m.getId());
+        addMessage(m);
+    }
+
+    @JsonIgnore
+    public void sort() {
+        messages.sort(Comparator.comparing(Message::getId));
+    }
+
+
+    @JsonIgnore
+    private void deleteMessageById(int id) {
+        messages.remove(getMessagesById(id));
+    }
+
+    @JsonIgnore
+    public List<Message> getMessagesWithoutGone() {
+        return messages.stream().filter(Message::isNotGone).collect(Collectors.toList());
     }
 }

@@ -26,7 +26,7 @@ public class MainClient {
                 Format.Http_Method method = Format.Http_Method.GET;
                 if(command[0].equals("struct") || command[0].equals("list"))method= Format.Http_Method.GET;
                 if(command[0].equals("send"))method= Format.Http_Method.POST;
-                if(command[0].equals("update"))method= Format.Http_Method.PUT;
+                if(command[0].equals("update"))method= Format.Http_Method.PATCH;
                 if(command[0].equals("delete"))method= Format.Http_Method.DELETE;
                 System.out.println("command equals: " + Arrays.toString(command));
                 //Method,path,host,port

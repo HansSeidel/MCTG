@@ -104,12 +104,10 @@ public class MainServer implements Runnable {
         switch (request.getMethod()){
             case GET: return HandleRequest.GET(request).BARE_STRING;
             case POST: return HandleRequest.POST(request).BARE_STRING;
-            case PATCH:
-                break;
+            case PATCH: return HandleRequest.PATCH(request).BARE_STRING;
             case PUT:
                 break;
-            case DELETE:
-                break;
+            case DELETE: return HandleRequest.DELETE(request).BARE_STRING;
             case HEAD:
                 break;
             case CONNECT:
