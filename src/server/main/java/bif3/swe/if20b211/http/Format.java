@@ -237,7 +237,7 @@ public class Format {
 
     //SetStatus function
     private void setStatus(int i, String s) {
-        if(status != 200){
+        if(status >= 200 && status < 300){
             this.error_message += String.format("There have been %d more errors which are not represented by this response.",error_counter);
         }else{
             this.status = i;
@@ -304,6 +304,8 @@ public class Format {
         System.out.println("body= " + body.toString());
     }
 
+    public void setStatus(int i) {
+    }
     //Additional Types
     public enum Http_Format_Type{
         REQUEST, RESPONSE

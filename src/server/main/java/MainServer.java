@@ -6,6 +6,7 @@ import bif3.swe.if20b211.http.Format;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 
 //TODO REWRITE SO JSON IS UNDERSTABLE (For Server and for client (also for google Client)
 //TODO Fix Bug, that after a specific period of time an Exception occures (Try with Connection-Header: Close)
@@ -102,8 +103,7 @@ public class MainServer implements Runnable {
 
         switch (request.getMethod()){
             case GET: return HandleRequest.GET(request).BARE_STRING;
-            case POST:
-                break;
+            case POST: return HandleRequest.POST(request).BARE_STRING;
             case PATCH:
                 break;
             case PUT:

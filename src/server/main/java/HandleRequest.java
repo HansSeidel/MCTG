@@ -153,4 +153,37 @@ public class HandleRequest {
             return new Format(404, "File Not Found - Btw. this should be unreachable code",null);
         }
     }
+
+    public static Format POST(Format request) {
+        if(request.getPath().equals("\\messages")||request.getPath().equals("\\messages\\")){
+            System.out.println("Putting messages with path: " + request.getPath());
+            Format response = new Format(Format.Http_Format_Type.RESPONSE);
+            Messages messages;
+            Message m;
+            try {
+                messages = Json_form.fromJson(Json_form.parse(new File(System.getProperty("user.dir") + "\\messages\\allMessages.json")), Messages.class);
+                m = request.getBody().fromJsonToObject(request.getBody().getJson_format(),Message.class);
+            } catch (IOException e) {
+                return new Format(503,"Service Unavailable - structure can't be processed. It could also be, that your body wasn't send correctly",null);
+            }
+            if(m.getSender() == null || m.getMessage() == null){
+                return new Format(400, "Bad Format - You may only POST if you have values for sender and message. Otherwise use Patch.",null);
+            }
+            m.setId(messages.getNextId());
+            messages.addMessage(m);
+            if(Json_form.write(System.getProperty("user.dir") + "/messages/allMessages.json",Json_form.toJson(messages)) == -1){
+                return new Format(500,"Internal Server Error - Struggling  writing new data. Please call the administrator.",null);
+            }else{
+                try {
+                    response.setBody(Json_form.stringify(Json_form.toJson(m)),"application/json");
+                    response.setStatus(201);
+                } catch (JsonProcessingException e) {
+                    return new Format(500,"Internal Server Error - Struggling  writing new data. Please call the administrator.",null);
+                }
+            }
+            return response;
+        }else {
+            return new Format(403,"Forbidden - You are not allowed to get any data from your requested resource.",null);
+        }
+    }
 }
