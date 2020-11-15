@@ -55,19 +55,21 @@ public class MainServer implements Runnable {
                 Socket s = _listener.accept();
                 //Was soll nun alles getestet werden:
                 String client_string = getClientString(s);
-                Format request = new Format(client_string);
-                System.out.println("Format.toString() - " + request.toString());
+                if(!(client_string == null)){
+                    Format request = new Format(client_string);
+                    System.out.println("Format.toString() - " + request.toString());
 
-                Format.Body body = request.getBody();
-                try{
-                    Message m = body.toObjectExpectingJson(Message.class);
-                    System.out.println("Parsing is done. Got following: Message id: " + m.getId() + " Sender: " + m.getSender() + " Message: " + m.getMessage());
-                }catch (NullPointerException e){
-                    System.out.println("Body is null");
+                    Format.Body body = request.getBody();
+                    try{
+                        Message m = body.toObjectExpectingJson(Message.class);
+                        System.out.println("Parsing is done. Got following: Message id: " + m.getId() + " Sender: " + m.getSender() + " Message: " + m.getMessage());
+                    }catch (NullPointerException e){
+                        System.out.println("Body is null");
+                    }
+                    String response = fullfill(request);
+                    System.out.println("response is: ----------- " + response);
+                    write(response,s);
                 }
-                String response = fullfill(request);
-                System.out.println("response is: ----------- " + response);
-                write(response,s);
 
                 //client_http_format.debug(); --> !!!Crashes the programm (on purpose)
 
@@ -133,6 +135,7 @@ public class MainServer implements Runnable {
         BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
         next = reader.readLine();
         //First loop is reading until first blank line occurs
+        if(next == null) return null;
         while (!next.isEmpty()){
             res += next+"\n";
             next = reader.readLine();

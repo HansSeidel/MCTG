@@ -1,5 +1,8 @@
 package bif3.swe.if20b211.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(value = {"gone"})
 public class Message {
     private boolean gone = false;
     private int id;

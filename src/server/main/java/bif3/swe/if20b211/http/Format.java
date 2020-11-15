@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,9 +63,12 @@ public class Format {
     }
 
     public String buildFormat() {
-        overwriteHeader("Content-Lenght",Integer.toString(body.getLength()));
+        overwriteHeader("Content-Length",Integer.toString(body.getLength()));
+        overwriteHeader("Date", new Date().toString());
         String res = null;
         if(this.type.equals(Http_Format_Type.RESPONSE)){
+            overwriteHeader("Status",Integer.toString(getStatus()));
+            overwriteHeader("Server","localhost");
             String status = this.status >= 200 && this.status < 300? "OK":"ERR";
             res = String.format("HTTP/1.1 %d %s\n",this.status,status);
             for (Map.Entry<String, String> entry:this.headers.entrySet())
@@ -72,15 +76,16 @@ public class Format {
         }
         if(body != null){
             res += "\n";
-            res += body.toString();
+            res += body.toString() + "\u001a";
         }
         this.BARE_STRING = res;
         return res;
     }
 
     private void addDefaultHeaders() {
-        addHeader("Accept","text/html");
+        addHeader("Accept","text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
         addHeader("Accept-Language","de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7");
+        addHeader("Accept-Encoding","gzip, deflate");
     }
 
     public Format(String s){
@@ -285,9 +290,15 @@ public class Format {
         return body;
     }
 
+    /**
+     * Also runs buildFormat()
+     * @param body
+     * @param mimeType
+     */
     public void setBody(String body, String mimeType) {
         System.out.println("Inside set Body with string: " + body);
         this.body = new Body(body, mimeType);
+        buildFormat();
     }
 
     /**

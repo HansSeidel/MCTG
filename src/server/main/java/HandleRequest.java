@@ -39,8 +39,8 @@ public class HandleRequest {
             return GET_api(path);
         } else if (path.startsWith("\\messages")){
             return GET_messages(path,request);
-        } else if(path.startsWith("\\index")){
-            //return GET_index(path);
+        } else if(path.startsWith("\\index") || path.equals("\\")){
+            return GET_index(path);
         } else if (path.startsWith("\\demo")){
             //return GET_demo(path);
         }else{
@@ -68,6 +68,23 @@ public class HandleRequest {
         }
 
  */
+    }
+
+    private static Format GET_index(String path) {
+        Format response = new Format(Format.Http_Format_Type.RESPONSE);
+        try {
+            File myObj = new File(System.getProperty("user.dir") + "/index.html");
+            Scanner myReader = new Scanner(myObj);
+            String data = "";
+            while (myReader.hasNextLine()) {
+                data += myReader.nextLine();
+            }
+            myReader.close();
+            response.setBody(data,"text/html");
+            return response;
+        } catch (FileNotFoundException e) {
+            return new Format(503,"Service Unavailable - structure can't be processed. Please contact the server administrator",null);
+        }
     }
 
     private static Format GET_messages(String path, Format request) {
@@ -119,7 +136,6 @@ public class HandleRequest {
                 return new Format(422, "Unprocessable Entity - The arguments can't be used. Use either limit or sender as argument",null);
             }
         }
-        response.buildFormat();
         System.out.println("Returning body with: " + response.BARE_STRING);
         return response;
     }
