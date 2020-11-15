@@ -188,7 +188,7 @@ public class HandleRequest {
                     response = new Format(204, "No Content - Body does not contain any valid data", null);
                 } else {
                     if(m.getSender() != null && m.getMessage() != null && !isPut)
-                        return new Format(405, "Method Not Allowed - If you changing everything use Put or create a new message", null);
+                        return new Format(405, "Method Not Allowed - If you changing everything use PUT or create a new message", null);
                     m.setMessage(m.getMessage() != null ? m.getMessage() : toPatch.getMessage());
                     m.setSender(m.getSender() != null ? m.getSender() : toPatch.getSender());
                     messages.changeMessage(m);

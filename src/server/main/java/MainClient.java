@@ -29,6 +29,7 @@ public class MainClient {
                 if(command[0].equals("send"))method= Format.Http_Method.POST;
                 if(command[0].equals("update"))method= Format.Http_Method.PATCH;
                 if(command[0].equals("delete"))method= Format.Http_Method.DELETE;
+                if(command[0].equals("put"))method= Format.Http_Method.PUT;
 
                 System.out.println(ConsoleColors.BLACK_BRIGHT + String.format("Bringing %s request to format",method.toString()));
                 Format request;
@@ -210,10 +211,13 @@ public class MainClient {
                 return null;
             }
             return new String[] {command,message_path,String.format("{\n\t\"sender\":\"%s\",\n\t\"message\": \"%s\"\n}",name,msg)};
-        }else if (command.startsWith("update")){
+        }else if (command.startsWith("update") || command.startsWith("put")){
             boolean updateName;
             boolean updateMessage;
-            boolean testings[] = testCommands(command,6,"update",true,true,true);
+            boolean isPut = command.startsWith("put");
+            boolean testings[] = isPut?
+                    testCommands(command,6,"update",true,true,true):
+                    testCommands(command,3,"put",true,true,true);
 
             if(testings[0]||!testings[1]||!testings[2]) return null;
 
@@ -250,7 +254,10 @@ public class MainClient {
             if(!updateMessage && !updateName){
                 System.out.println("Seems like you won't change anything. Discarding command.");
                 return null;
+            }else if(updateMessage && updateName && !isPut){
+                System.out.println("Seems like you want to change everything. Use put instead.");
             }
+
             return new String[] {command.split(" ")[0],(message_path+command_number[1]),"{" +
                     (updateName?String.format("\n\t\"sender\":\"%s\"%s",name,updateMessage?",":""):"") +
                     (updateMessage?String.format("\n\t\"message\": \"%s\"",msg):"") +
@@ -306,6 +313,8 @@ public class MainClient {
             }catch(NumberFormatException e){
                 if(print_messages[2])System.err.println("Expected <"+correct_command+" x> x to be type of Integer. Got another type.");
                 testings[2] = false;
+            }catch (ArrayIndexOutOfBoundsException e){
+                if(print_messages[2])System.err.println("Expected <"+correct_command+" x> x to be type of Integer. But it is null.");
             }
         }
         return testings;
