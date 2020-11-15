@@ -1,4 +1,4 @@
-package bif3.swe.if20b211;
+package bif3.swe.if20b211.http;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

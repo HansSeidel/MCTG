@@ -1,47 +1,20 @@
-import bif3.swe.if20b211.Json_form;
+import bif3.swe.if20b211.api.HandleRequest;
 import bif3.swe.if20b211.api.Message;
-import bif3.swe.if20b211.api.Messages;
 import bif3.swe.if20b211.http.Format;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
 
-//TODO REWRITE SO JSON IS UNDERSTABLE (For Server and for client (also for google Client)
-//TODO Fix Bug, that after a specific period of time an Exception occures (Try with Connection-Header: Close)
-//TODO WRITE POST AND UPDATE AND ETC.
-//TODO WRITE TOO MANY REQUEST Handling <optional>
-//TODO Implement TOKEN and LDAP connection <optional>
 
 public class MainServer implements Runnable {
 
     private static ServerSocket _listener = null;
 
-    /*
-     * TODO Handle Request so structure.json is the response (If the request was propper formatted)
-     * Pseudocode to aim for:
-     *
-     */
 
     public static void main(String[] args) {
         System.out.println("start server");
-/*
-        try {
-            JsonNode node = Json_form.parse(new File(System.getProperty("user.dir") + "/messages/testMessage.json"));
-            Message messages = Json_form.fromJson(node,Message.class);
 
-            System.out.println("message id: " + messages.getId());
-            System.out.println("sender id: " + messages.getSender());
-            System.out.println("message id: " + messages.getMessage());
-
-            messages.setSender("Hans");
-            System.out.println("Processing writing: " + Json_form.write(System.getProperty("user.dir") + "/messages/testMessage.json",Json_form.toJson(messages)));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
         try {
             _listener = new ServerSocket(8000, 5);
         } catch (IOException e) {
@@ -54,38 +27,20 @@ public class MainServer implements Runnable {
         try {
             Socket s = _listener.accept();
             while (true) {
-                //Was soll nun alles getestet werden:
                 String client_string = getClientString(s);
-                System.out.println("clientString: " + client_string);
                 if(!(client_string == null)){
                     Format request = new Format(client_string);
-                    System.out.println("Format.toString() - " + request.toString());
 
                     Format.Body body = request.getBody();
                     try{
                         Message m = body.toObjectExpectingJson(Message.class);
                         System.out.println("Parsing is done. Got following: Message id: " + m.getId() + " Sender: " + m.getSender() + " Message: " + m.getMessage());
                     }catch (NullPointerException e){
-                        System.out.println("Body is null");
+                        System.out.println("Body is null or not in Format Message");
                     }
                     String response = fullfill(request);
                     write(response,s);
                 }
-
-                //client_http_format.debug(); --> !!!Crashes the programm (on purpose)
-
-                //System.out.println("client_http_format to string: " +client_http_format.toString());
-                //SimpleBufferedWriter writer = new SimpleBufferedWriter(new OutputStreamWriter(s.getOutputStream()));
-
-                //System.out.println("srv: sending welcome message");
-                //writer.write("Welcome to myserver!","Please enter your commands...");
-
-                //BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
-                //String message;
-                //do {
-                //    message = reader.readLine();
-                //    System.out.println("srv: received: " + message);
-                //} while (!"quit".equals(message));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -117,7 +72,7 @@ public class MainServer implements Runnable {
             case TRACE:
                 break;
         }
-        System.out.println("No httpmethod");
+        System.err.println("No httpmethod");
         return null;
     }
 
@@ -132,41 +87,31 @@ public class MainServer implements Runnable {
         String next = "";
         boolean body = true;
         BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
-      //  if(!reader.ready()){
-      //      System.out.println("Not ready");
-       //     return null;
-      //  }
-        System.out.println("Processing first: ");
+
         next = reader.readLine();
-        System.out.println("Still Reading");
         //First loop is reading until first blank line occurs
         while (!next.isEmpty()){
             res += next+"\n";
-            System.out.println("next: " + next);
             if(!reader.ready()) break;
             next = reader.readLine();
         }
-        System.out.println("Still Reading");
 
         //Ready is waiting a short period of time and checking if there is some readable text behind the blank line.
         res += "\n";
         if(!reader.ready()){
             body = false;
         }
-        System.out.println("Still Reading");
 
         //Reading out the rest of the incoming message
         if(body){
             while((next = reader.readLine()) != null){
                 res += next + "\n";
-                System.out.println("next is : "+next);
                 if(!reader.ready()){
                     break;
                 }
             }
         }
 
-        System.out.println("Res: " + res.trim());
         return res.trim();
     }
 

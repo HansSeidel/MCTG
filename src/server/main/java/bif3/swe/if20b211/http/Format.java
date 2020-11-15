@@ -1,10 +1,7 @@
 package bif3.swe.if20b211.http;
 
-import bif3.swe.if20b211.Json_form;
-import bif3.swe.if20b211.api.Message;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.*;
@@ -235,7 +232,6 @@ public class Format {
         return res;
     }
 
-    //SetStatus function
     private void setStatus(int i, String s) {
         if(status >= 200 && status < 300){
             this.error_message += String.format("There have been %d more errors which are not represented by this response.",error_counter);
@@ -324,7 +320,6 @@ public class Format {
      * @param mimeType
      */
     public void setBody(String body, String mimeType) {
-        System.out.println("Inside set Body with string: " + body);
         this.body = new Body(body, mimeType);
         buildFormat();
     }

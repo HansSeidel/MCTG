@@ -1,12 +1,7 @@
-import bif3.swe.if20b211.api.MyHttpHandler;
-import bif3.swe.if20b211.api.SimpleBufferedWriter;
 import bif3.swe.if20b211.http.Format;
 
-import javax.net.ssl.HostnameVerifier;
 import java.io.*;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.IllegalFormatException;
 
 public class MainClient {
     public static void main(String[] args) {
@@ -16,7 +11,6 @@ public class MainClient {
         try{
             Socket s = new Socket(HOST,PORT);
             while (true){
-                //TODO Write following use cases:
                 String command[] = null;
                 do{
                     command = getCommandFormatFromConsole();
@@ -28,12 +22,9 @@ public class MainClient {
                 if(command[0].equals("send"))method= Format.Http_Method.POST;
                 if(command[0].equals("update"))method= Format.Http_Method.PATCH;
                 if(command[0].equals("delete"))method= Format.Http_Method.DELETE;
-                System.out.println("command equals: " + Arrays.toString(command));
-                //Method,path,host,port
                 Format request;
                 try{
                     if(command.length == 2){
-                        System.out.println("No Body");
                         request = new Format(method, HOST,command[1],null,null);
                     }else if(command.length == 3){
                         request = new Format(method,HOST,command[1],command[2],"application/json");
@@ -44,14 +35,12 @@ public class MainClient {
                         request = null;
                     }
                 }catch (IllegalArgumentException e){
-                    System.out.println("Unkwon requets");
+                    System.err.println("Unkwon requets");
                     return;
                 }
                 request.buildFormat();
                 String final_request = request.BARE_STRING;
-                System.out.println("request is: ----------- " + final_request);
                 write(final_request,s);
-                System.out.println("Response: " + read(s));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,42 +63,35 @@ public class MainClient {
             return null;
         }
         next = reader.readLine();
-        System.out.println("Still Reading");
         //First loop is reading until first blank line occurs
         if(next == null) return null;
         while (!next.isEmpty()){
             res += next+"\n";
-            System.out.println("next: " + next);
             if(!reader.ready()) break;
             next = reader.readLine();
         }
-        System.out.println("Still Reading");
 
         //Ready is waiting a short period of time and checking if there is some readable text behind the blank line.
         res += "\n";
         if(!reader.ready()){
             body = false;
         }
-        System.out.println("Still Reading");
 
         //Reading out the rest of the incoming message
         if(body){
             while((next = reader.readLine()) != null){
                 res += next + "\n";
-                System.out.println("next is : "+next);
                 if(!reader.ready()){
                     break;
                 }
             }
         }
 
-        System.out.println("Res: " + res.trim());
         return res.trim();
     }
 
     private static void write(String response, Socket s) throws IOException {
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
-        System.out.println("Writing message");
         writer.write(response);
         writer.newLine();
         writer.flush();
