@@ -1,18 +1,22 @@
 package bif3.swe.if20b211.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
-@JsonIgnoreProperties(value = {"gone"})
 public class Message {
     private boolean gone = false;
     private int id;
     private String sender;
     private String message;
 
+    @JsonIgnore
     public boolean isGone() {
         return gone;
     }
 
+    @JsonProperty
     private void setGone(boolean gone) {
         this.gone = gone;
     }
