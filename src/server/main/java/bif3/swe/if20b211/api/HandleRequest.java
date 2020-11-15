@@ -145,8 +145,8 @@ public class HandleRequest {
                 return new Format(500, "Internal Server Error - Struggling  writing new data. Please call the administrator.", null);
             } else {
                 try {
-                    response.setBody(Json_form.stringify(Json_form.toJson(m)), "application/json");
                     response.setStatus(201);
+                    response.setBody(Json_form.stringify(Json_form.toJson(m)), "application/json");
                 } catch (JsonProcessingException e) {
                     return new Format(500, "Internal Server Error - Struggling  writing new data. Please call the administrator.", null);
                 }
@@ -157,7 +157,15 @@ public class HandleRequest {
         }
     }
 
-    public static Format PATCH(Format request) {
+    public static Format PATCH(Format request){
+        return PUT_PATCH(request,false);
+    }
+
+    public static Format PUT(Format request) {
+        return PUT_PATCH(request,true);
+    }
+
+    private static Format PUT_PATCH(Format request, boolean isPut) {
         if (request.getPath().startsWith("\\messages\\")) {
             Format response = new Format(Format.Http_Format_Type.RESPONSE);
             Messages messages;
@@ -171,10 +179,16 @@ public class HandleRequest {
                 Message toPatch = messages.getMessagesById(id);
                 if (m.getId() != 0)
                     return new Format(403, "Forbidden - You are not allowed to change the id of a message", null);
+                if(toPatch == null)
+                    return new Format(404,"Not Found - There is no message to update under the requested id",null);
+                if(toPatch.isGone())
+                    return new Format(410, "Gone - The message doesn't exist any longer", null);
                 m.setId(toPatch.getId());
                 if (m.getMessage() == null && m.getSender() == null) {
                     response = new Format(204, "No Content - Body does not contain any valid data", null);
                 } else {
+                    if(m.getSender() != null && m.getMessage() != null && !isPut)
+                        return new Format(405, "Method Not Allowed - If you changing everything use Put or create a new message", null);
                     m.setMessage(m.getMessage() != null ? m.getMessage() : toPatch.getMessage());
                     m.setSender(m.getSender() != null ? m.getSender() : toPatch.getSender());
                     messages.changeMessage(m);
@@ -187,8 +201,8 @@ public class HandleRequest {
                         if (response.getStatus() == 204) {
                             response.setBody(Json_form.stringify(Json_form.toJson(toPatch)), "application/json");
                         } else {
-                            response.setBody(Json_form.stringify(Json_form.toJson(m)), "application/json");
                             response.setStatus(202);
+                            response.setBody(Json_form.stringify(Json_form.toJson(m)), "application/json");
                         }
                     } catch (JsonProcessingException e) {
                         return new Format(500, "Internal Server Error - Struggling  writing new data. Please call the administrator.", null);

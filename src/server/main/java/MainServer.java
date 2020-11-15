@@ -46,7 +46,7 @@ public class MainServer implements Runnable {
                     //fullfill the request, build a new Format and return the new Format.
                     Format response = fullfill(request);
                     assert response != null;
-                    System.out.println("Retrieving response with status: " +
+                    System.out.println("Processed response with status: " +
                             (response.getStatus() >= 200 && response.getStatus() < 300?ConsoleColors.GREEN_BOLD+response.getStatus():ConsoleColors.RED_BOLD+response.getStatus()));
                     System.out.println(ConsoleColors.GREEN+"Sending response..." + ConsoleColors.RESET);
                     write(response.BARE_STRING,s);
@@ -70,8 +70,7 @@ public class MainServer implements Runnable {
             case GET: return HandleRequest.GET(request);
             case POST: return HandleRequest.POST(request);
             case PATCH: return HandleRequest.PATCH(request);
-            case PUT:
-                break;
+            case PUT: return HandleRequest.PUT(request);
             case DELETE: return HandleRequest.DELETE(request);
             case HEAD:
                 break;

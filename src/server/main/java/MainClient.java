@@ -1,5 +1,10 @@
+import bif3.swe.if20b211.api.Message;
+import bif3.swe.if20b211.api.Messages;
 import bif3.swe.if20b211.colores.ConsoleColors;
 import bif3.swe.if20b211.http.Format;
+import bif3.swe.if20b211.http.Json_form;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.json.JSONException;
 
 import java.io.*;
 import java.net.Socket;
@@ -45,7 +50,9 @@ public class MainClient {
                 request.buildFormat();
                 String final_request = request.BARE_STRING;
                 write(final_request,s);
-                System.out.println("Retrieved following information" + read(s));
+                System.out.println("Retieving infromation...");
+
+                printResponse(new Format(read(s)));
 
             }
         } catch (Exception e) {
@@ -53,6 +60,54 @@ public class MainClient {
         }
         System.out.println("close client");
 
+    }
+
+    private static void printResponse(Format read) {
+        boolean isNoError = read.getStatus() >= 200 && read.getStatus() < 300;
+        String criticalColor = isNoError?ConsoleColors.GREEN_BOLD:ConsoleColors.RED_BOLD;
+        String standardColor = ConsoleColors.BLUE_BRIGHT;
+        System.out.println(String.format("%sServer responded with status: %s",standardColor,criticalColor+read.getStatus()));
+        if(read.getBody() != null){
+            if(isNoError){
+                Message response_msg = null;
+                Messages response_messages = null;
+                JsonNode rest = null;
+                try {
+                    response_msg = read.getBody().fromJsonToObject(read.getBody().getJson_format(),Message.class);
+                } catch (IOException | JSONException e) {
+                    try {
+                        response_messages = read.getBody().fromJsonToObject(read.getBody().getJson_format(),Messages.class);
+                    } catch (IOException | JSONException ioException) {
+                        try {
+                            rest = read.getBody().getJson_format();
+                        } catch (IOException ignored){}
+                    }
+                }
+                if(response_messages == null && response_msg == null && rest == null){
+                    System.out.printf("%sReceived following message: %s%n",criticalColor,read.getBody().toString());
+                }else if(response_msg != null){
+                    System.out.printf("%sReceived one message:%s\n\tID:%d\n\tsender:%s\n\tmessage:%s%n",
+                            criticalColor,standardColor,response_msg.getId(),response_msg.getSender(),response_msg.getMessage());
+                }else if(response_messages != null){
+                    System.out.printf("%sReceived a list of messages(%d): %n",criticalColor,response_messages.getMessages().size());
+                    response_messages.getMessages().
+                            forEach(message -> System.out.printf("%sNext Message:\n\tID:%d\n\tsender:%s\n\tmessage:%s%n%n",
+                                standardColor,message.getId(),message.getSender(),message.getMessage()));
+                }else {
+                    System.out.printf("%sReceived non matching Json data:",criticalColor);
+                    rest.elements().forEachRemaining(el -> System.out.printf("%sReceived content: %s",standardColor,el.asText()));
+                }
+            }else {
+                try {
+                    System.out.printf("%sReceived error message: %s%s%n",criticalColor,standardColor,read.getBody().getJson_format().get("error_message"));
+                } catch (IOException e) {
+                    System.out.printf("%sERROR-MESSAGE IS NOT READABLE%n",criticalColor);
+                }
+            }
+        }else {
+            System.out.printf("%sNo Body detected%n",standardColor);
+        }
+        System.out.printf("%sEnd of Response.%s%n",standardColor,ConsoleColors.RESET);
     }
 
     private static String read(Socket s) throws IOException {

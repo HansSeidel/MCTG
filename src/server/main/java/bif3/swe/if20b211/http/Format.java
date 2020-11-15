@@ -130,6 +130,16 @@ public class Format {
             }
             path = path_args[0];
             arguments = path_args.length < 2? null:generateStringKeyValueMapByDelimiters(path_args[1],"&","=");
+        }else{
+            method = null;
+            arguments = null;
+            //VERSION STATUS ERR/OK
+            try{
+                this.status = Integer.parseInt(request_splitted[0].split(" ")[1]);
+            }catch (NumberFormatException e){
+                System.err.println("Failed, parsing the status code.");
+            }
+            this.path = null;
         }
         headers = generateStringKeyValueMapByDelimiters(request_splitted[1],"\\n",":");
 
