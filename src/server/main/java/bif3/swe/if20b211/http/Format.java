@@ -106,13 +106,13 @@ public class Format {
         addHeader("Accept-Language","de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7");
         addHeader("Accept-Encoding","gzip, deflate");
         if(Http_Format_Type.REQUEST.equals(this.type)){
-            addHeader("Connection","Close");
+            addHeader("Connection","keep-alive");
         }
     }
 
     public Format(String s){
         BARE_STRING = s;
-        if(s.isEmpty() || s == null) {
+        if(s == null || s.isEmpty()) {
             setStatus(400, "Bad Request - No Content");
             return;
         }
@@ -203,8 +203,15 @@ public class Format {
      */
     private Http_Format_Type getTypeAndCheckHTTPVersion(String s) {
         String[] toCheck = s.split(" ");
+        boolean is_request;
         //Check if the last index is the HTTP version. If yes, it is a request. If not it is either a response or the wrong HTTPVersion
-        boolean is_request = toCheck[2].startsWith("HTTP/1");
+        if(toCheck.length == 2){
+            is_request = true;
+        }else{
+            is_request = toCheck[2].startsWith("HTTP/1");
+        }
+
+
         //If HTTP/1 wasn't found, check if it is inside the first index. If it is, it is a response. If it isn't it is the wrong HTTPVersion.
         if(!is_request) if(!toCheck[0].startsWith("HTTP/1")) setStatus(505, "HTTP Version Not Supported: This api only responding to HTTP/1.x");
         if(getStatus() == 505) return null;
