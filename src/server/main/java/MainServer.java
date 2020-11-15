@@ -1,5 +1,6 @@
 import bif3.swe.if20b211.api.HandleRequest;
 import bif3.swe.if20b211.api.Message;
+import bif3.swe.if20b211.colores.ConsoleColors;
 import bif3.swe.if20b211.http.Format;
 
 import java.io.*;
@@ -26,20 +27,29 @@ public class MainServer implements Runnable {
 
         try {
             Socket s = _listener.accept();
+            System.out.println("Connection established");
             while (true) {
                 String client_string = getClientString(s);
                 if(!(client_string == null)){
+                    //Bring request into workable format:
+                    System.out.println(ConsoleColors.GREEN+"Formatting request..."+ConsoleColors.RESET);
                     Format request = new Format(client_string);
-
                     Format.Body body = request.getBody();
                     try{
                         Message m = body.toObjectExpectingJson(Message.class);
-                        System.out.println("Parsing is done. Got following: Message id: " + m.getId() + " Sender: " + m.getSender() + " Message: " + m.getMessage());
                     }catch (NullPointerException e){
-                        System.out.println("Body is null or not in Format Message");
+                        System.out.println(ConsoleColors.RED_BRIGHT + "Body is null or not in correct Format" + ConsoleColors.RESET);
                     }
-                    String response = fullfill(request);
-                    write(response,s);
+
+                    System.out.println(String.format("%sRetrieved a request: %s\nPath to fullfill the action is: %s\n%sExecuting...",ConsoleColors.GREEN_BRIGHT,request.getMethod(),request.getPath(),ConsoleColors.GREEN) + ConsoleColors.RESET);
+
+                    //fullfill the request, build a new Format and return the new Format.
+                    Format response = fullfill(request);
+                    assert response != null;
+                    System.out.println("Retrieving response with status: " +
+                            (response.getStatus() >= 200 && response.getStatus() < 300?ConsoleColors.GREEN_BOLD+response.getStatus():ConsoleColors.RED_BOLD+response.getStatus()));
+                    System.out.println(ConsoleColors.GREEN+"Sending response..." + ConsoleColors.RESET);
+                    write(response.BARE_STRING,s);
                 }
             }
         } catch (IOException e) {
@@ -54,15 +64,15 @@ public class MainServer implements Runnable {
         writer.flush();
     }
 
-    private static String fullfill(Format request) throws IOException {
+    private static Format fullfill(Format request) throws IOException {
 
         switch (request.getMethod()){
-            case GET: return HandleRequest.GET(request).BARE_STRING;
-            case POST: return HandleRequest.POST(request).BARE_STRING;
-            case PATCH: return HandleRequest.PATCH(request).BARE_STRING;
+            case GET: return HandleRequest.GET(request);
+            case POST: return HandleRequest.POST(request);
+            case PATCH: return HandleRequest.PATCH(request);
             case PUT:
                 break;
-            case DELETE: return HandleRequest.DELETE(request).BARE_STRING;
+            case DELETE: return HandleRequest.DELETE(request);
             case HEAD:
                 break;
             case CONNECT:

@@ -1,3 +1,4 @@
+import bif3.swe.if20b211.colores.ConsoleColors;
 import bif3.swe.if20b211.http.Format;
 
 import java.io.*;
@@ -13,6 +14,7 @@ public class MainClient {
             while (true){
                 String command[] = null;
                 do{
+                    //Checking action
                     command = getCommandFormatFromConsole();
                 }while (command == null);
                 if(command[0].equals("quit")) break;
@@ -22,6 +24,8 @@ public class MainClient {
                 if(command[0].equals("send"))method= Format.Http_Method.POST;
                 if(command[0].equals("update"))method= Format.Http_Method.PATCH;
                 if(command[0].equals("delete"))method= Format.Http_Method.DELETE;
+
+                System.out.println(ConsoleColors.BLACK_BRIGHT + String.format("Bringing %s request to format",method.toString()));
                 Format request;
                 try{
                     if(command.length == 2){
@@ -41,6 +45,8 @@ public class MainClient {
                 request.buildFormat();
                 String final_request = request.BARE_STRING;
                 write(final_request,s);
+                System.out.println("Retrieved following information" + read(s));
+
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -106,14 +112,14 @@ public class MainClient {
         String message_path = "/messages/";
         String api_structure_path = "/api/structure";
 
-        System.out.println("Enter your command: <struct, list, send, list x, update x, delete x>");
+        System.out.println(ConsoleColors.BLUE+"Enter your command: <struct, list, send, list x, update x, delete x>");
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String command = br.readLine().trim().toLowerCase();
         if(command.equals("struct")){
             return new String[]{"list",api_structure_path};
         }else if(command.startsWith("list")){
             //Check if user wants to list all messages
-            boolean testings[] = testCommands(command,4,"list",true,true,true);
+            boolean testings[] = testCommands(command,4,"list",false,true,true);
             if(testings[0]){
                 System.out.println(String.format("Returning the following: {%s},{%s}",command,message_path));
                 return new String[] {command,message_path};
