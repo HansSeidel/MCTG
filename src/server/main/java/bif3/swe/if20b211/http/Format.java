@@ -7,10 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Format {
     //Public variables
@@ -62,8 +59,26 @@ public class Format {
         this.BARE_STRING = buildFormat();
     }
 
-    public String buildFormat() {
-        overwriteHeader("Content-Length",Integer.toString(body.getLength()));
+    public Format(Http_Method request, String host, String path, String body, String mime_type, String ... args) {
+        //Define Request
+        type = Http_Format_Type.REQUEST;
+        this.method = request;
+        this.path = path;
+        addHeader("Host",host);
+        for(String arg : args) {
+            try {
+                addArgument(arg.split("=")[0], arg.split("=")[1]);
+            } catch (IndexOutOfBoundsException e) {
+                setStatus(400, "Bad Format - Parameters can't be processed correctly");
+            }
+        }
+        this.body = body == null? null:new Body(body,mime_type);
+        buildFormat();
+        addDefaultHeaders();
+    }
+
+    public String buildFormat(){
+        if(body != null) overwriteHeader("Content-Length",Integer.toString(body.getLength()));
         overwriteHeader("Date", new Date().toString());
         String res = null;
         if(this.type.equals(Http_Format_Type.RESPONSE)){
@@ -71,9 +86,16 @@ public class Format {
             overwriteHeader("Server","localhost");
             String status = this.status >= 200 && this.status < 300? "OK":"ERR";
             res = String.format("HTTP/1.1 %d %s\n",this.status,status);
-            for (Map.Entry<String, String> entry:this.headers.entrySet())
-                res += String.format("%s: %s\n", entry.getKey(), entry.getValue());
+        }else {
+            String args = "?";
+            for(Map.Entry<String,String> entry:this.arguments.entrySet())
+                args += String.format("%s=%s&",entry.getKey(),entry.getValue());
+            //Removing last & or resetting args to be ""
+            args = args.length() > 1? args.substring(0,args.length()-1):"";
+            res = String.format("%s %s%s HTTP/1.1\n",this.method.toString(),path,args);
         }
+        for (Map.Entry<String, String> entry:this.headers.entrySet())
+            res += String.format("%s: %s\n", entry.getKey(), entry.getValue());
         if(body != null){
             res += "\n";
             res += body.toString() + "\u001a";
@@ -86,6 +108,9 @@ public class Format {
         addHeader("Accept","text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
         addHeader("Accept-Language","de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7");
         addHeader("Accept-Encoding","gzip, deflate");
+        if(Http_Format_Type.REQUEST.equals(this.type)){
+            addHeader("Connection","Close");
+        }
     }
 
     public Format(String s){
@@ -227,6 +252,7 @@ public class Format {
     public HashMap<String, String> getHeaders(){ return headers; }
     public HashMap<String, String> getArguments () {return arguments;}
     public void addHeader(String header, String value){this.headers.put(header,value);}
+    public void addArgument(String argument, String value){this.arguments.put(argument,value);}
     public void overwriteHeader(String header, String value){
         this.headers.remove(header);
         this.addHeader(header,value);

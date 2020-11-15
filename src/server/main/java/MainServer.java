@@ -51,10 +51,11 @@ public class MainServer implements Runnable {
         Runtime.getRuntime().addShutdownHook(new Thread(new MainServer()));
 
         try {
+            Socket s = _listener.accept();
             while (true) {
-                Socket s = _listener.accept();
                 //Was soll nun alles getestet werden:
                 String client_string = getClientString(s);
+                System.out.println("clientString: " + client_string);
                 if(!(client_string == null)){
                     Format request = new Format(client_string);
                     System.out.println("Format.toString() - " + request.toString());
@@ -67,7 +68,6 @@ public class MainServer implements Runnable {
                         System.out.println("Body is null");
                     }
                     String response = fullfill(request);
-                    System.out.println("response is: ----------- " + response);
                     write(response,s);
                 }
 
@@ -94,6 +94,7 @@ public class MainServer implements Runnable {
     private static void write(String response, Socket s) throws IOException {
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
         writer.write(response);
+        writer.newLine();
         writer.flush();
     }
 
@@ -133,28 +134,41 @@ public class MainServer implements Runnable {
         String next = "";
         boolean body = true;
         BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
+      //  if(!reader.ready()){
+      //      System.out.println("Not ready");
+       //     return null;
+      //  }
+        System.out.println("Processing first: ");
         next = reader.readLine();
+        System.out.println("Still Reading");
         //First loop is reading until first blank line occurs
-        if(next == null) return null;
         while (!next.isEmpty()){
             res += next+"\n";
+            System.out.println("next: " + next);
+            if(!reader.ready()) break;
             next = reader.readLine();
         }
+        System.out.println("Still Reading");
+
         //Ready is waiting a short period of time and checking if there is some readable text behind the blank line.
         res += "\n";
         if(!reader.ready()){
             body = false;
         }
+        System.out.println("Still Reading");
+
         //Reading out the rest of the incoming message
         if(body){
             while((next = reader.readLine()) != null){
                 res += next + "\n";
+                System.out.println("next is : "+next);
                 if(!reader.ready()){
                     break;
                 }
             }
         }
-        //System.out.println("Res: " + res.trim());
+
+        System.out.println("Res: " + res.trim());
         return res.trim();
     }
 
