@@ -1,3 +1,4 @@
+import bif3.swe.if20b211.api.DBConnector;
 import bif3.swe.if20b211.api.HandleRequest;
 import bif3.swe.if20b211.api.Message;
 import bif3.swe.if20b211.colores.ConsoleColors;
@@ -6,19 +7,22 @@ import bif3.swe.if20b211.http.Format;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 
 
 public class MainServer implements Runnable {
 
     private static ServerSocket _listener = null;
-
+    private static DBConnector _dbConnector = null;
 
     public static void main(String[] args) {
         System.out.println("start server");
 
         try {
             _listener = new ServerSocket(8000, 5);
-        } catch (IOException e) {
+            //TODO rewrite to "[..]/swe_if20b211" (After sql Script test)
+            _dbConnector = new DBConnector("jdbc:postgresql://localhost:5432/swe","postgres","admin");
+        } catch (IOException | SQLException e) {
             e.printStackTrace();
             return;
         }
@@ -31,6 +35,10 @@ public class MainServer implements Runnable {
             while (true) {
                 String client_string = getClientString(s);
                 if(!(client_string == null)){
+                    if(!_dbConnector.testConnection(true)){
+                        System.err.println("Unexpected error within the DB-Connection test");
+                        break;
+                    }
                     //Bring request into workable format:
                     System.out.println(ConsoleColors.GREEN+"Formatting request..."+ConsoleColors.RESET);
                     Format request = new Format(client_string);

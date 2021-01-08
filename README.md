@@ -27,7 +27,6 @@ __<dependency>
    <version>2.9.6</version>
 </dependency>:__
 
-Postgress library (Inside "lib" -> folder)
 
 ```
 <dependency>
@@ -36,6 +35,23 @@ Postgress library (Inside "lib" -> folder)
    <version>2.9.6</version>
 </dependency>
 ```
+<br>
+Postgres implementation:
+<br>
+
+__<dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.2.18.jre6</version>
+        </dependency>__
+```
+<dependency>
+   <groupId>org.postgresql</groupId>
+   <artifactId>postgresql</artifactId>
+   <version>42.2.18.jre6</version>
+</dependency>     
+```
+
 #### Setup:
 This repository is based on a project create by a professor of the above mentioned University.
 To take a look at the his project you might visit: [Daniel Kienböck: Server-Client example in github](https://github.com/kienboec/ClientServerSampleInJava.git).
