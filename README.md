@@ -27,6 +27,8 @@ __<dependency>
    <version>2.9.6</version>
 </dependency>:__
 
+Postgress library (Inside "lib" -> folder)
+
 ```
 <dependency>
    <groupId>com.fasterxml.jackson.core</groupId>
