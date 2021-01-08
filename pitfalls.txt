@@ -2,3 +2,16 @@
 Setup:
 I tried to create the server client setup by installing and connecting a local server (tomcat) instead of just using
 Java
+
+HTTP-Request Tries:
+    Wrote GET inside the reqeust wrong (Get) -> 400 Bad Request
+
+ServerSocket closing:
+    Closing either the BufferedWriter or the BufferedReader, closes the SocketConnection as well. So the Socket can't
+    be used anymore.
+
+BufferedReader eof problem:
+    BufferedR continues Reading until eof is found. If sending a Response, the body either contains eof nor
+    the end of the last line is recognised by the BufferR. Therefore added a crosscheck with the incoming Content-Lenght
+    and the read Characters.
+    ++ Impleneted reader.ready() as well -> is checking if next reader.readLine() leads to infinity Reading.

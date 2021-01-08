@@ -1,3 +1,6 @@
+#Created messages
+/messages/*.json
+
 # Compiled class file
 *.class
 

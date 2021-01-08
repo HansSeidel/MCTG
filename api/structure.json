@@ -1,0 +1,8 @@
+{
+  "get": {
+    "1": "api/structure",
+    "2": "/index/",
+    "3": "/messages/",
+    "4": "/messages/{id}"
+  }
+}
