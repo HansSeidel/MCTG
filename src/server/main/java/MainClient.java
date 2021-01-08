@@ -17,6 +17,7 @@ public class MainClient {
         try{
             Socket s = new Socket(HOST,PORT);
             while (true){
+
                 String command[] = null;
                 do{
                     //Checking action
