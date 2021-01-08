@@ -15,21 +15,20 @@ public class MainServer implements Runnable {
 
     public static void main(String[] args) {
         System.out.println("start server");
-/*
-        try {
 
+        try {
+            _listener = new ServerSocket(8000, 5);
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
-*/
+
         Runtime.getRuntime().addShutdownHook(new Thread(new MainServer()));
 
         try {
-            _listener = new ServerSocket(8000, 5);
+            Socket s = _listener.accept();
+            System.out.println("Connection established");
             while (true) {
-                Socket s = _listener.accept();
-                System.out.println("Connection established");
                 String client_string = getClientString(s);
                 if(!(client_string == null)){
                     //Bring request into workable format:
@@ -97,13 +96,13 @@ public class MainServer implements Runnable {
         String next = "";
         boolean body = true;
         BufferedReader reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
+
         next = reader.readLine();
         //First loop is reading until first blank line occurs
         while (!next.isEmpty()){
-            //next = reader.readLine();
             res += next+"\n";
-            if(!reader.ready()) break; //DEL
-            next = reader.readLine(); //DEL
+            if(!reader.ready()) break;
+            next = reader.readLine();
         }
 
         //Ready is waiting a short period of time and checking if there is some readable text behind the blank line.
