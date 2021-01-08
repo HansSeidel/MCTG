@@ -20,8 +20,7 @@ public class MainServer implements Runnable {
 
         try {
             _listener = new ServerSocket(8000, 5);
-            //TODO rewrite to "[..]/swe_if20b211" (After sql Script test)
-            _dbConnector = new DBConnector("jdbc:postgresql://localhost:5432/swe","postgres","admin");
+            _dbConnector = new DBConnector("jdbc:postgresql://localhost:5432/swe_if20b211","postgres","admin");
         } catch (IOException | SQLException e) {
             e.printStackTrace();
             return;
