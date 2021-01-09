@@ -9,6 +9,7 @@ import org.json.JSONException;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
 
 public class MainClient {
     public static void main(String[] args) {
@@ -19,18 +20,26 @@ public class MainClient {
             Socket s = new Socket(HOST,PORT);
             ClientConsoleHandler cch = new ClientConsoleHandler();
             cch.welcomeMessage();
+            Format request = null;
             while (true){
-                Format request;
                 if(!cch.isUserLoggedIn()){
                     System.out.println("Not logged in");
                     cch.logInOrRegister();
-                    request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType(),cch.getArgs());
-                    request.buildFormat();
-                    write(request.BARE_STRING,s);
-                    cch.handleResponse(new Format(read(s)));
+                    request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType());
                 }else{
                     System.out.println("Logged in");
+                    String userCommand = cch.requestInput();
+                    if(userCommand.startsWith("buy")){
+                        cch.acquirePackage(userCommand);
+                    }
+                    request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType());
+                    for (String arg:cch.getArgs())
+                        request.addArgument(arg.split("=")[0],arg.split("=")[1]);
+                    request.addHeader("token", cch.getToken());
                 }
+                request.buildFormat();
+                write(request.BARE_STRING,s);
+                cch.handleResponse(new Format(read(s)));
             }
         } catch (Exception e) {
             e.printStackTrace();

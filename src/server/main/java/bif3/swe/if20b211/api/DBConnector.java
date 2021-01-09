@@ -1,11 +1,15 @@
 package bif3.swe.if20b211.api;
 
+import bif3.swe.if20b211.mctg.models.Card;
 import bif3.swe.if20b211.mctg.models.User;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class DBConnector {
     private String url;
@@ -71,7 +75,53 @@ public class DBConnector {
         ResultSet db_pw = connector.createStatement()
                 .executeQuery(String.format("SELECT password FROM \"Password\" WHERE username = '%s';",user.getUsername()));
         if(!db_pw.next()) return false;
-        System.out.printf("\nPW_DB: %s ; PW_user: %s ;\n",db_pw.getString(1),user.getPassword());
         return db_pw.getString(1).equals(user.getPassword());
+    }
+
+    public int getCoins(String username) throws SQLException {
+        ResultSet db_coins = connector.createStatement()
+                .executeQuery(String.format("SELECT coins FROM \"MUser\" WHERE username = '%s';",username));
+        if(!db_coins.next()) return -1;
+        return db_coins.getInt(1);
+    }
+
+    public Card[] acquirePackages(int amount) throws SQLException {
+        if(amount >= 100) return null;
+        //Think about taking all cards out of the database and do the rest inside here.
+        List<Card> results = new ArrayList<Card>();
+        //https://stackoverflow.com/questions/8115722/generating-unique-random-numbers-in-java
+        ArrayList<Integer> randomNumber = new ArrayList<Integer>();
+        for (int i=0; i<1000; i++)
+            randomNumber.add(i);
+        Collections.shuffle(randomNumber);
+        for(int i = 0; i < amount;i++){ //Loop through amount of cards to take
+            ResultSet db_cards = connector.createStatement()
+                    .executeQuery("SELECT * FROM \"Card\" GROUP BY 2;");
+            int occ_counter = 0;
+            for(int n = 0;n <= 1000;n++){ //Loop 1000*card.occurance times through all cards
+                for(int y = 0; y < (amount*5);y++) //Loop each time through cards amount again
+                    if(n == randomNumber.get(y)) //Compare with random number (unique)
+                        results.add(new Card(
+                        db_cards.getString("cardname"),
+                        db_cards.getInt("damage"),
+                        db_cards.getString("type"),
+                        db_cards.getString("is_a"),
+                        db_cards.getInt("occurance")));
+                if(occ_counter <= db_cards.getInt("occurance")){
+                    occ_counter++;
+                    n--; //As mentioned above, loop card.occurance times more often through the same card.
+                }else {
+                    if(!db_cards.next())db_cards.first();
+                    occ_counter = 0;
+                }
+            }
+        }
+        return results.toArray(new Card[results.size()]);
+    }
+
+    public void updateCoins(String username, int amount) {
+    }
+
+    public void addToDeck(String username, int amount, Card[] cards) {
     }
 }

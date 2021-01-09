@@ -4,15 +4,26 @@ import bif3.swe.if20b211.http.Json_form;
 import bif3.swe.if20b211.api.Message;
 import bif3.swe.if20b211.api.Messages;
 import bif3.swe.if20b211.http.Format;
+import bif3.swe.if20b211.mctg.models.Card;
 import bif3.swe.if20b211.mctg.models.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.*;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
 public class HandleRequest {
+    private static User user = null;
+
+    private static boolean checkAuth(String token) {
+        if(user == null) return false;
+        if(token == null) return false;
+        if(!user.isLoggedIn()) return false;
+        if(!user.getToken().equals(token)) return false;
+        return true;
+    }
 
     /**
      * Get reqeust which get answerde:
@@ -126,7 +137,7 @@ public class HandleRequest {
         if(path.equals("\\api\\mctg\\register") || path.equals("\\api\\mctg\\login")){
             Format response = new Format(Format.Http_Format_Type.RESPONSE);
             try {
-                User user = request.getBody().fromJsonToObject(request.getBody().getJson_format(), User.class);
+                user = request.getBody().fromJsonToObject(request.getBody().getJson_format(), User.class);
                 if(_dbConnector.userExists(user.getUsername())){
                     if(path.equals("\\api\\mctg\\login")){
                         if(!_dbConnector.checkPassword(user))
@@ -150,7 +161,25 @@ public class HandleRequest {
             }
             return response;
         }
-        return new Format(404, "File Not Found", null);
+        if(path.equals("\\api\\mctg\\order")) {
+            if(!checkAuth(request.getValueOfStringHashMap(request.getHeaders(),"token")))
+                return new Format(401, "Unauthorized - You must be logged in for these comments",null);;
+            try {
+                int current_coins = _dbConnector.getCoins(user.getUsername());
+                if(current_coins <= 5){
+                    if(current_coins == -1) return new Format(500, "Internal Server Error - No coins at all",null);
+                    return new Format(409, "Conflict - Not enough coins",null);
+                }
+                int amount = Integer.parseInt(request.getValueOfStringHashMap(request.getArguments(),"amount"));
+                Card[] cards = _dbConnector.acquirePackages(amount);
+                _dbConnector.updateCoins(user.getUsername(),amount);
+                _dbConnector.addToDeck(user.getUsername(),amount,cards);
+                // Update Users deck
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        }
+        return new Format(404, "Request Not Found", null);
     }
 
     public static Format POST(Format request) {

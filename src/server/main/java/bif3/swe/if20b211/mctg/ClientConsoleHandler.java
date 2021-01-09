@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
+import java.util.Collection;
 import java.util.HashMap;
 
 public class ClientConsoleHandler {
@@ -21,33 +22,62 @@ public class ClientConsoleHandler {
     private String body;
     private String mimeType;
     private String[] args;
+    private String token;
 
+    /**
+     * Handles all interaction between the user and the console according to the mctg-project.
+     * With an Instance of this class you may also prepare a http-request (For the Format-Class) and
+     * read the response properly.
+     */
     public ClientConsoleHandler (){
         this.clientBR = new BufferedReader(new InputStreamReader(System.in));
     }
 
-    public String getInput() throws IOException {
-        return this.clientBR.readLine();
+    private void printColoredMessageLn(String colorCode, String message){System.out.println(String.format("%s%s",colorCode,message)); }
+    private void colorReset() {
+        System.out.printf("%s",ConsoleColors.RESET);
+    }
+    private String getInput() throws IOException {return this.clientBR.readLine(); }
+    private void wrongInput(String message) {
+        printColoredMessageLn(ConsoleColors.RED, String.format("ERROR APPEARED: %s\n%s",message,
+                "Enter help to see all commands"));
+        this.colorReset();
     }
 
-    public void printColoredMessageLn(String colorCode, String message){
-        System.out.println(String.format("%s%s",colorCode,message));
+
+
+    /**
+     * This simply request a input of the user
+     * @return a String from Console-Input
+     * @throws IOException
+     */
+    public String requestInput() throws IOException {
+        printColoredMessageLn(ConsoleColors.BLUE,"Enter a command or \"quit\" to exit");
+        colorReset();
+        return this.getInput().trim();
     }
 
-    public User register(){
-        return null;
-    }
-
+    /**
+     * Delivers a welcome Message to the user.
+     */
     public void welcomeMessage() {
         printColoredMessageLn(ConsoleColors.GREEN,"Welcome to the Monstercard Trading Game");
         colorReset();
     }
 
+    /**
+     * Checks if the user token is set or not.
+     * @return True - If the user token is set. Otherwise it will return false.
+     */
     public boolean isUserLoggedIn() {
         if(this.user == null) return false; //To prevent NullPointerException
         return this.user.isLoggedIn();
     }
 
+    /**
+     * Manages the login or register procedure of the user.
+     * @throws IOException
+     */
     public void logInOrRegister() throws IOException {
 
         printColoredMessageLn(ConsoleColors.BLUE, "Please enter either login or register.");
@@ -56,11 +86,13 @@ public class ClientConsoleHandler {
         if(credentials.length > 4){
             this.wrongInput("Too many input Parameter.");
             logInOrRegister(); //Recursive call if input has been wrong.
+            this.colorReset();
             return;
         }
         if(!(credentials[0].toLowerCase().equals("register") || credentials[0].toLowerCase().equals("login"))) {
             this.wrongInput("You have to be logged to use this application.");
             logInOrRegister(); //Recursive call if input has been wrong.
+            this.colorReset();
             return;
         }
         if(credentials.length < 2){
@@ -78,6 +110,7 @@ public class ClientConsoleHandler {
             if(!getInput().equals(credentials[2])){
                 wrongInput("The verification failed.");
                 logInOrRegister(); //Recursive call if input has been wrong.
+                this.colorReset();
                 return;
             }
         }
@@ -86,13 +119,40 @@ public class ClientConsoleHandler {
                 String.format("{\"username\":\"%s\",\"password\":\"%s\"}",
                 this.user.getUsername(),this.user.getPassword()),null);
         this.user.clearPassword();
+        this.colorReset();
+    }
+
+    public void acquirePackage(String userCommand) throws IOException {
+        int amount = 0;
+        if(userCommand.equals("buy package")){
+            amount = 1;
+            //With trim() and the space at the end of "buy package ",
+            //IndexOutOfBoundsException is prevented.
+        }else if(userCommand.trim().startsWith("buy package ")){
+            try{
+                amount = Integer.parseInt(userCommand.split(" ")[2]);
+            }catch (NumberFormatException e){
+                wrongInput("Expected a Number as last parameter.");
+                this.colorReset();
+                return;
+            }
+        }
+        printColoredMessageLn(ConsoleColors.BLUE,
+                String.format("Do you want to buy %d package[s]? Enter ['y'/'n']",amount));
+        if(this.getInput().equals("y")){
+            this.prepareStatement(Format.Http_Method.GET,"order",null,
+                    String.format("amount=%d",amount));
+        }else {
+            this.printColoredMessageLn(ConsoleColors.YELLOW,"Canceled order");
+        }
+        this.colorReset();
     }
 
     /**
-     *
-     * @param method
-     * @param command
-     * @param body
+     * This function prepares all properties to be ready for http-transmission
+     * @param method Format.Http_Method
+     * @param command String
+     * @param body - String body in Json format.
      * @param args - in Format: "name=argument","name=argument",...
      */
     private void prepareStatement(Format.Http_Method method, String command,String body, String ... args) {
@@ -101,17 +161,41 @@ public class ClientConsoleHandler {
         this.body = body;
         this.mimeType = "application/Json";
         this.args = args;
+        if(this.isUserLoggedIn()) this.token = this.user.getToken();
     }
 
-    private void colorReset() {
-        System.out.printf("%s",ConsoleColors.RESET);
+    /**
+     * This handles all incomes, relevant for the mctg-project.
+     * It also clears all arguments of (this)
+     * @param read
+     */
+    public void handleResponse(Format read) {
+        this.setArgs(null);
+        boolean isNoError = read.getStatus() >= 200 && read.getStatus() < 300;
+        String model = read.getValueOfStringHashMap(read.getHeaders(),"model");
+        if(!isNoError || model == null){
+            try {
+                printColoredMessageLn(ConsoleColors.RED,
+                        String.format("Received error message: %s%n",
+                                read.getBody().getJson_format().get("error_message")));
+            } catch (IOException e) {
+                printColoredMessageLn(ConsoleColors.RED,
+                        String.format("ERROR-MESSAGE IS NOT READABLE: %s",e.toString()));
+            } finally {
+                this.colorReset();
+                return;
+            }
+        }
+        if(model.equals("user")) {
+            this.user.setToken(read.getValueOfStringHashMap(read.getHeaders(),"token"));
+            System.out.println("Token is set to: " + this.user.getToken());
+            if(read.getStatus() == 200) printColoredMessageLn(ConsoleColors.BLUE,"Logged in");
+            if(read.getStatus() == 201) printColoredMessageLn(ConsoleColors.BLUE,"Registerd and Logged in");
+            if(read.getStatus() == 205) printColoredMessageLn(ConsoleColors.BLUE, "Logged out");
+        }
     }
 
-    private void wrongInput(String message) {
-        printColoredMessageLn(ConsoleColors.RED, String.format("ERROR APPEARED: %s\n%s",message,
-                "Enter help to see all commands"));
-        this.colorReset();
-    }
+
 
     //Getter and Setters.
     public Format.Http_Method getMethod() {
@@ -130,32 +214,15 @@ public class ClientConsoleHandler {
         return mimeType;
     }
 
+    private void setArgs(String[] args) {
+        this.args = args;
+    }
+
     public String[] getArgs() {
         return args;
     }
 
-    public void handleResponse(Format read) {
-        boolean isNoError = read.getStatus() >= 200 && read.getStatus() < 300;
-        String model = read.getValueOfStringHashMap(read.getHeaders(),"model");
-        if(!isNoError || model == null){
-            try {
-                printColoredMessageLn(ConsoleColors.RED,
-                        String.format("Received error message: %s%n",
-                        read.getBody().getJson_format().get("error_message")));
-            } catch (IOException e) {
-                printColoredMessageLn(ConsoleColors.RED,
-                        String.format("ERROR-MESSAGE IS NOT READABLE: %s",e.toString()));
-            } finally {
-                this.colorReset();
-                return;
-            }
-        }
-        if(model.equals("user")) {
-            this.user.setToken(read.getValueOfStringHashMap(read.getHeaders(),"token"));
-            System.out.println("Token is set to: " + this.user.getToken());
-            if(read.getStatus() == 200) printColoredMessageLn(ConsoleColors.BLUE,"Logged in");
-            if(read.getStatus() == 201) printColoredMessageLn(ConsoleColors.BLUE,"Registerd and Logged in");
-            if(read.getStatus() == 205) printColoredMessageLn(ConsoleColors.BLUE, "Logged out");
-        }
+    public String getToken() {
+        return token;
     }
 }
