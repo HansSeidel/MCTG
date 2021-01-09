@@ -13,6 +13,8 @@ public class User {
     private String username;
     private String password;
     private String token;
+    private int elo;
+    private int coins;
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public User(@JsonProperty("username") String username,@JsonProperty("password") String password){
@@ -69,4 +71,19 @@ public class User {
         this.token = token;
     }
 
+    public int getElo() {
+        return elo;
+    }
+
+    public void setElo(int elo) {
+        this.elo = elo;
+    }
+
+    public int getCoins() {
+        return coins;
+    }
+
+    public void setCoins(int coins) {
+        this.coins = coins;
+    }
 }
