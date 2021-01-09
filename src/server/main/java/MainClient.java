@@ -3,6 +3,7 @@ import bif3.swe.if20b211.api.Messages;
 import bif3.swe.if20b211.colores.ConsoleColors;
 import bif3.swe.if20b211.http.Format;
 import bif3.swe.if20b211.http.Json_form;
+import bif3.swe.if20b211.mctg.ClientConsoleHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.json.JSONException;
 
@@ -16,8 +17,17 @@ public class MainClient {
         final int PORT = 8000;
         try{
             Socket s = new Socket(HOST,PORT);
+            ClientConsoleHandler cch = new ClientConsoleHandler();
+            cch.welcomeMessage();
             while (true){
-
+                Format request;
+                if(!cch.isUserLoggedIn()){
+                    System.out.println("Not logged in");
+                    cch.logInOrRegister();
+                    request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType(),cch.getArgs());
+                }else{
+                    System.out.println("Logged in");
+                }
                 String command[] = null;
                 do{
                     //Checking action
@@ -33,7 +43,7 @@ public class MainClient {
                 if(command[0].equals("put"))method= Format.Http_Method.PUT;
 
                 System.out.println(ConsoleColors.BLACK_BRIGHT + String.format("Bringing %s request to format",method.toString()));
-                Format request;
+
                 try{
                     if(command.length == 2){
                         request = new Format(method, HOST,command[1],null,null);
