@@ -62,11 +62,13 @@ public class Format {
         this.method = request;
         this.path = path;
         addHeader("Host",host);
-        for(String arg : args) {
-            try {
-                addArgument(arg.split("=")[0], arg.split("=")[1]);
-            } catch (IndexOutOfBoundsException e) {
-                setStatus(400, "Bad Format - Parameters can't be processed correctly");
+        if(args != null) {
+            for (String arg : args) {
+                try {
+                    addArgument(arg.split("=")[0], arg.split("=")[1]);
+                } catch (IndexOutOfBoundsException e) {
+                    setStatus(400, "Bad Format - Parameters can't be processed correctly");
+                }
             }
         }
         this.body = body == null? null:new Body(body,mime_type);

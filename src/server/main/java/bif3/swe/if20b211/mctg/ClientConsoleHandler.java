@@ -2,6 +2,7 @@ package bif3.swe.if20b211.mctg;
 
 import bif3.swe.if20b211.colores.ConsoleColors;
 import bif3.swe.if20b211.http.Format;
+import bif3.swe.if20b211.http.Json_form;
 import bif3.swe.if20b211.mctg.models.User;
 
 import java.io.BufferedReader;
@@ -50,39 +51,48 @@ public class ClientConsoleHandler {
 
         printColoredMessageLn(ConsoleColors.BLUE, "Please enter either login or register.");
         this.colorReset();
-        String credintials[] = this.getInput().trim().split(" ");
-        if(credintials.length > 4){
+        String[] credentials = this.getInput().trim().split(" ");
+        if(credentials.length > 4){
             this.wrongInput("Too many input Parameter.");
             logInOrRegister(); //Recursive call if input has been wrong.
             return;
         }
-        if(!(credintials[0].toLowerCase().equals("register") || credintials[0].toLowerCase().equals("login"))) {
+        if(!(credentials[0].toLowerCase().equals("register") || credentials[0].toLowerCase().equals("login"))) {
             this.wrongInput("You have to be logged to use this application.");
             logInOrRegister(); //Recursive call if input has been wrong.
             return;
         }
-        if(credintials.length < 2){
+        if(credentials.length < 2){
             printColoredMessageLn(ConsoleColors.BLUE,"Enter your username");
-            credintials = new String[]{credintials[0], this.getInput()};
+            credentials = new String[]{credentials[0], this.getInput()};
         }
-        if(credintials.length < 3){
+        if(credentials.length < 3){
             printColoredMessageLn(ConsoleColors.BLUE,"Please enter your password");
-            credintials = new String[]{credintials[0],credintials[1], this.getInput()};
+            credentials = new String[]{credentials[0],credentials[1], this.getInput()};
         }
-        this.user = new User(credintials[1],credintials[2]);
+        this.user = new User(credentials[1],credentials[2]);
 
-        if(credintials.length < 4 && credintials[0].toLowerCase().equals("register")){
+        if(credentials.length < 4 && credentials[0].toLowerCase().equals("register")){
             printColoredMessageLn(ConsoleColors.BLUE,"Please verify you password");
-            if(!getInput().equals(credintials[2])){
+            if(!getInput().equals(credentials[2])){
                 wrongInput("The verification failed.");
                 logInOrRegister(); //Recursive call if input has been wrong.
                 return;
             }
         }
-        this.prepareStatement(Format.Http_Method.GET,credintials[0].toLowerCase(),null,
-                "un",this.user.getUsername(),this.user.getPassword());
+        this.prepareStatement(Format.Http_Method.GET,
+                credentials[0].toLowerCase(),
+                String.format("{\"username\":\"%s\",\"password\":\"%s\"}",
+                this.user.getUsername(),this.user.getPassword()),null);
     }
 
+    /**
+     *
+     * @param method
+     * @param command
+     * @param body
+     * @param args - in Format: "name=argument","name=argument",...
+     */
     private void prepareStatement(Format.Http_Method method, String command,String body, String ... args) {
         this.method = method;
         this.requestPath = String.format("%s%s",this.mctgPath, command);

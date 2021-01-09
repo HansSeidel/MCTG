@@ -1,5 +1,9 @@
 package bif3.swe.if20b211.mctg.models;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -9,11 +13,13 @@ public class User {
     private String password;
     private String token;
 
-    public User(String username, String password){
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public User(@JsonProperty("username") String username,@JsonProperty("password") String password){
         this.username = username;
         this.password = this.getHashedPassword256(password);
     }
 
+    @JsonIgnore
     private String getHashedPassword256(String password){
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -26,6 +32,7 @@ public class User {
         }
     }
 
+    @JsonIgnore
     public boolean isLoggedIn() {
         return !(token.isEmpty());
     }
@@ -41,10 +48,6 @@ public class User {
 
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = this.getHashedPassword256(password);
     }
 
     public String getToken() {

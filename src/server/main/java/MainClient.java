@@ -25,6 +25,8 @@ public class MainClient {
                     System.out.println("Not logged in");
                     cch.logInOrRegister();
                     request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType(),cch.getArgs());
+                    request.buildFormat();
+                    write(request.BARE_STRING,s);
                 }else{
                     System.out.println("Logged in");
                 }

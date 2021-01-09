@@ -1,5 +1,7 @@
 package bif3.swe.if20b211.api;
 
+import bif3.swe.if20b211.mctg.models.User;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -38,5 +40,30 @@ public class DBConnector {
             return false;
         }
         return true;
+    }
+
+    public boolean userExists(String username) throws SQLException {
+        ResultSet q_result = connector.createStatement()
+                .executeQuery(String.format("SELECT * FROM \"MUser\" WHERE username = '%s';",username));
+        return q_result.next();
+    }
+
+    public int addUser(User user) throws SQLException {
+        //The sense behind this construct (User and Password Table) should be to add User within a View or Function.
+        //In this case you could Hash the password again inside the db and you would be able to deny any direct link
+        //To the password from outside the database. I have choosen the short version because i am struggling with the time.
+        int rows = 0;
+        rows += connector.createStatement()
+                .executeUpdate(String.format("INSERT INTO \"MUser\" (username) VALUES ('%s');",user.getUsername()));
+        rows += connector.createStatement()
+                .executeUpdate(String.format("INSERT INTO \"Password\" (password,username) VALUES ('%s','%s');"
+                        ,user.getPassword(),user.getUsername()));
+        if(rows >= 2){
+            System.out.println("User has been added");
+            return 0;
+        }else{
+            System.err.println("Unkwon error");
+            return -1;
+        }
     }
 }

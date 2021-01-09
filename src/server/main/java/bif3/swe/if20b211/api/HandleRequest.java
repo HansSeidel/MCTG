@@ -4,10 +4,12 @@ import bif3.swe.if20b211.http.Json_form;
 import bif3.swe.if20b211.api.Message;
 import bif3.swe.if20b211.api.Messages;
 import bif3.swe.if20b211.http.Format;
+import bif3.swe.if20b211.mctg.models.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.*;
+import java.sql.SQLException;
 import java.util.*;
 
 public class HandleRequest {
@@ -27,12 +29,12 @@ public class HandleRequest {
      *
      * @return
      */
-    public static Format GET(Format request) {
+    public static Format GET(Format request, DBConnector _dbConnector) {
         String path = request.getPath();
         if (!path.contains("\\")) {
             return new Format(404, "Not Found - the link you try to address does not exist", null);
         } else if (path.startsWith("\\api")) {
-            return GET_api(path);
+            return GET_api(path, request, _dbConnector);
         } else if (path.startsWith("\\messages")) {
             return GET_messages(path, request);
         } else if (path.startsWith("\\index") || path.equals("\\")) {
@@ -112,7 +114,7 @@ public class HandleRequest {
         return response;
     }
 
-    private static Format GET_api(String path) {
+    private static Format GET_api(String path, Format request, DBConnector _dbConnector) {
         if (path.equals("\\api") || path.equals("\\api\\") || path.equals("\\api\\structure") || path.equals("\\api\\structure.json")) {
             try {
                 JsonNode node = Json_form.parse(new File(System.getProperty("user.dir") + "\\api\\structure.json"));
@@ -120,9 +122,29 @@ public class HandleRequest {
             } catch (IOException e) {
                 return new Format(503, "Service Unavailable - structure can't be processed. Please contact the server administrator", null);
             }
-        } else {
-            return new Format(404, "File Not Found - Btw. this should be unreachable code", null);
         }
+        if(path.equals("\\api\\mctg\\register")){
+            Format response = new Format(Format.Http_Format_Type.RESPONSE);
+            try {
+                User user = request.getBody().fromJsonToObject(request.getBody().getJson_format(), User.class);
+                if(_dbConnector.userExists(user.getUsername())){
+                    return new Format(409, "Conflicht - Username already exists.",null);
+                }else{
+                    if(_dbConnector.addUser(user) != 0) return new Format(500, "Internal Server Error - please contact the administrator",null);
+                    user.setToken(UUID.randomUUID().toString());
+                    response.setStatus(201);
+                    response.setBody(Json_form.stringify(Json_form.toJson(user)), "application/json");
+                }
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+            return response;
+        }
+        return new Format(404, "File Not Found", null);
     }
 
     public static Format POST(Format request) {

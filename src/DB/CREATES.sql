@@ -1,18 +1,18 @@
 DROP TABLE IF EXISTS "Offer";
 DROP TABLE IF EXISTS "Stack";
 DROP TABLE IF EXISTS "Password";
-DROP TABLE IF EXISTS "User";
+DROP TABLE IF EXISTS "MUser";
 DROP TABLE IF EXISTS "Card";
 
-create table if not exists "User"
+create table if not exists "MUser"
 (
     username varchar(30) not null
-        constraint "User_pkey"
+        constraint "MUser_pkey"
             primary key,
     elo integer default 20 not null
 );
 
-alter table "User" owner to postgres;
+alter table "MUser" owner to postgres;
 
 create table if not exists "Password"
 (
@@ -21,8 +21,8 @@ create table if not exists "Password"
             primary key,
     password varchar(255) not null,
     username varchar(30) not null
-        constraint password_user__fk
-            references "User"
+        constraint password_muser__fk
+            references "MUser"
             on delete cascade
 );
 
@@ -52,8 +52,8 @@ create table if not exists "Offer"
             references "Card"
             on delete cascade,
     username varchar(30) not null
-        constraint offer_user_username_fk
-            references "User"
+        constraint offer_muser_username_fk
+            references "MUser"
             on delete cascade,
     minimum_expected varchar(5) default 'M50'::character varying,
         constraint offer_pk
@@ -65,8 +65,8 @@ alter table "Offer" owner to postgres;
 create table if not exists "Stack"
 (
     username varchar(30) not null
-        constraint stack_user_username_fk
-            references "User"
+        constraint stack_muser_username_fk
+            references "MUser"
             on delete cascade,
     cardname varchar(30) not null
         constraint stack_card_cardname_fk

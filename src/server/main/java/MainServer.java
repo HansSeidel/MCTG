@@ -41,12 +41,6 @@ public class MainServer implements Runnable {
                     //Bring request into workable format:
                     System.out.println(ConsoleColors.GREEN+"Formatting request..."+ConsoleColors.RESET);
                     Format request = new Format(client_string);
-                    Format.Body body = request.getBody();
-                    try{
-                        Message m = body.toObjectExpectingJson(Message.class);
-                    }catch (NullPointerException e){
-                        System.out.println(ConsoleColors.RED_BRIGHT + "Body is null or not in correct Format" + ConsoleColors.RESET);
-                    }
 
                     System.out.println(String.format("%sRetrieved a request: %s\nPath to fullfill the action is: %s\n%sExecuting...",ConsoleColors.GREEN_BRIGHT,request.getMethod(),request.getPath(),ConsoleColors.GREEN) + ConsoleColors.RESET);
 
@@ -74,7 +68,7 @@ public class MainServer implements Runnable {
     private static Format fullfill(Format request) throws IOException {
 
         switch (request.getMethod()){
-            case GET: return HandleRequest.GET(request);
+            case GET: return HandleRequest.GET(request,_dbConnector);
             case POST: return HandleRequest.POST(request);
             case PATCH: return HandleRequest.PATCH(request);
             case PUT: return HandleRequest.PUT(request);
