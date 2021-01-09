@@ -27,6 +27,7 @@ public class MainClient {
                     request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType(),cch.getArgs());
                     request.buildFormat();
                     write(request.BARE_STRING,s);
+                    cch.handleResponse(new Format(read(s)));
                 }else{
                     System.out.println("Logged in");
                 }

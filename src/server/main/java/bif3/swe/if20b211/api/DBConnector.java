@@ -66,4 +66,12 @@ public class DBConnector {
             return -1;
         }
     }
+
+    public boolean checkPassword(User user) throws SQLException {
+        ResultSet db_pw = connector.createStatement()
+                .executeQuery(String.format("SELECT password FROM \"Password\" WHERE username = '%s';",user.getUsername()));
+        if(!db_pw.next()) return false;
+        System.out.printf("\nPW_DB: %s ; PW_user: %s ;\n",db_pw.getString(1),user.getPassword());
+        return db_pw.getString(1).equals(user.getPassword());
+    }
 }

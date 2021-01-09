@@ -123,24 +123,30 @@ public class HandleRequest {
                 return new Format(503, "Service Unavailable - structure can't be processed. Please contact the server administrator", null);
             }
         }
-        if(path.equals("\\api\\mctg\\register")){
+        if(path.equals("\\api\\mctg\\register") || path.equals("\\api\\mctg\\login")){
             Format response = new Format(Format.Http_Format_Type.RESPONSE);
             try {
                 User user = request.getBody().fromJsonToObject(request.getBody().getJson_format(), User.class);
                 if(_dbConnector.userExists(user.getUsername())){
-                    return new Format(409, "Conflicht - Username already exists.",null);
+                    if(path.equals("\\api\\mctg\\login")){
+                        if(!_dbConnector.checkPassword(user))
+                            return new Format(406, "Not accepted - Wrong password", null);
+                    }else{
+                        return new Format(409, "Conflicht - Username already exists.",null);
+                    }
                 }else{
+                    if(path.equals("\\api\\mctg\\login"))
+                        return new Format(404, "Not Found - User not found",null);
                     if(_dbConnector.addUser(user) != 0) return new Format(500, "Internal Server Error - please contact the administrator",null);
-                    user.setToken(UUID.randomUUID().toString());
-                    response.setStatus(201);
-                    response.setBody(Json_form.stringify(Json_form.toJson(user)), "application/json");
                 }
-            } catch (JsonProcessingException e) {
+                user.setToken(UUID.randomUUID().toString());
+                response.setStatus(201);
+                if(path.equals("\\api\\mctg\\login")) response.setStatus(200);
+                response.addHeader("model","user");
+                response.addHeader("token", user.getToken());
+                response.setBody(Json_form.stringify(Json_form.toJson(user)), "application/json");
+            } catch (IOException | SQLException e) {
                 e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
             }
             return response;
         }

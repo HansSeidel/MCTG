@@ -1,5 +1,6 @@
 package bif3.swe.if20b211.mctg;
 
+import bif3.swe.if20b211.api.Message;
 import bif3.swe.if20b211.colores.ConsoleColors;
 import bif3.swe.if20b211.http.Format;
 import bif3.swe.if20b211.http.Json_form;
@@ -84,6 +85,7 @@ public class ClientConsoleHandler {
                 credentials[0].toLowerCase(),
                 String.format("{\"username\":\"%s\",\"password\":\"%s\"}",
                 this.user.getUsername(),this.user.getPassword()),null);
+        this.user.clearPassword();
     }
 
     /**
@@ -130,5 +132,30 @@ public class ClientConsoleHandler {
 
     public String[] getArgs() {
         return args;
+    }
+
+    public void handleResponse(Format read) {
+        boolean isNoError = read.getStatus() >= 200 && read.getStatus() < 300;
+        String model = read.getValueOfStringHashMap(read.getHeaders(),"model");
+        if(!isNoError || model == null){
+            try {
+                printColoredMessageLn(ConsoleColors.RED,
+                        String.format("Received error message: %s%n",
+                        read.getBody().getJson_format().get("error_message")));
+            } catch (IOException e) {
+                printColoredMessageLn(ConsoleColors.RED,
+                        String.format("ERROR-MESSAGE IS NOT READABLE: %s",e.toString()));
+            } finally {
+                this.colorReset();
+                return;
+            }
+        }
+        if(model.equals("user")) {
+            this.user.setToken(read.getValueOfStringHashMap(read.getHeaders(),"token"));
+            System.out.println("Token is set to: " + this.user.getToken());
+            if(read.getStatus() == 200) printColoredMessageLn(ConsoleColors.BLUE,"Logged in");
+            if(read.getStatus() == 201) printColoredMessageLn(ConsoleColors.BLUE,"Registerd and Logged in");
+            if(read.getStatus() == 205) printColoredMessageLn(ConsoleColors.BLUE, "Logged out");
+        }
     }
 }

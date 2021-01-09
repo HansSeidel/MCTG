@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -25,7 +26,12 @@ public class User {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] encodedhash = digest.digest(
                     password.getBytes(StandardCharsets.UTF_8));
-            return encodedhash.toString();
+            BigInteger number = new BigInteger(1,encodedhash);
+            StringBuilder hexString = new StringBuilder(number.toString(16));
+            while (hexString.length() < 32){
+                hexString.insert(0,'0');
+            }
+            return hexString.toString();
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             return null;
@@ -34,7 +40,12 @@ public class User {
 
     @JsonIgnore
     public boolean isLoggedIn() {
+        if(this.token == null) return false; //To prevent NullPointerException
         return !(token.isEmpty());
+    }
+    @JsonIgnore
+    public void clearPassword() {
+        this.password = null;
     }
 
     //Getter and Setters
@@ -57,4 +68,5 @@ public class User {
     public void setToken(String token) {
         this.token = token;
     }
+
 }
