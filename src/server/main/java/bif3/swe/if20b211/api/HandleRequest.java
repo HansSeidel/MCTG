@@ -2,6 +2,7 @@ package bif3.swe.if20b211.api;
 
 import bif3.swe.if20b211.http.Json_form;
 import bif3.swe.if20b211.http.Format;
+import bif3.swe.if20b211.mctg.models.Battle;
 import bif3.swe.if20b211.mctg.models.Card;
 import bif3.swe.if20b211.mctg.models.User;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -52,6 +53,7 @@ public class HandleRequest {
         if(path.equals("\\api\\mctg\\register") || path.equals("\\api\\mctg\\login")){
             try {
                 user = request.getBody().fromJsonToObject(request.getBody().getJson_format(), User.class);
+                if(user.getUsername().equals("DRAW")) return new Format(409, "Conflict - Username DRAW is restricted",null);
                 if(_dbConnector.userExists(user.getUsername())){
                     if(path.equals("\\api\\mctg\\login")){
                         if(!_dbConnector.checkPassword(user))
@@ -115,6 +117,33 @@ public class HandleRequest {
             }else {
                 return new Format(404, "Request Not Found - unknown action in Header field", null);
             }
+        }
+        if(request.getPath().equals("\\api\\mctg\\battle")){
+            User opponent = null;
+            List<Card> opponent_deck = null;
+
+            List<Card> attacker_deck = null;
+            try {
+                attacker_deck = _dbConnector.getDeck(user.getUsername());
+                if(attacker_deck == null) return new Format(409, "Conflict - You have no cards equipt in your deck",null);
+                long startTime = System.currentTimeMillis();
+                do {
+                    opponent = _dbConnector.getRandomUser(user);
+                    opponent_deck = _dbConnector.getDeck(opponent.getUsername());
+                    if (System.currentTimeMillis()-startTime > 1000)
+                        return new Format(404, "No Opponent Found - No opponent has a deck equipt at the moment. " +
+                                "You must tell your friends to buy this game for faster queues :)",null);
+                } while (opponent_deck == null);
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+            Battle battle = new Battle(user,opponent,attacker_deck,opponent_deck);
+            response.addHeader("model","battle");
+            response.addHeader("winner",battle.getWinnerName());
+            //response.addHeader("coins",battle.getCoinsWon(battle.getWinner()));
+            //response.addHeader("elo",battle.getElo(battle.getWinner()));
+            response.setBody(battle.getLog(),"plain/text");
+            return response;
         }
         return new Format(404, "Request Not Found", null);
     }

@@ -215,4 +215,13 @@ public class DBConnector {
         count_cards_in_dec.next();
         return count_cards_in_dec.getInt(1);
     }
+
+    public User getRandomUser(User ... exclude) throws SQLException {
+        User user = null;
+        ResultSet result = connector.createStatement()
+                .executeQuery(String.format("SELECT * FROM \"MUser\" " +
+                        "WHERE username != %s ORDER BY random()",user.getUsername()));
+        result.next();
+        return new User(result.getString("username"),"XXXXXXX");
+    }
 }

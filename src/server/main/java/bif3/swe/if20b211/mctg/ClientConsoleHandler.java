@@ -204,7 +204,7 @@ public class ClientConsoleHandler {
      * It also clears all arguments of (this)
      * @param read
      */
-    public void handleResponse(Format read) {
+    public void handleResponse(Format read) throws InterruptedException {
         this.setArgs(null);
         boolean isNoError = read.getStatus() >= 200 && read.getStatus() < 300;
         String model = read.getValueOfStringHashMap(read.getHeaders(),"model");
@@ -265,6 +265,22 @@ public class ClientConsoleHandler {
                 e.printStackTrace();
             }
             colorReset();
+        }
+        if(model.equals("battle")){
+            String winner = read.getValueOfStringHashMap(read.getHeaders(),"winner");
+            boolean won = user.getUsername().equals(winner);
+            if(won){
+                printColoredMessageLn(ConsoleColors.GREEN_BOLD,String.format("%s won!",winner));
+            }else {
+                if (winner.equals("DRAW")){
+                    printColoredMessageLn(ConsoleColors.BLUE,"DRAW");
+                }else {
+                    printColoredMessageLn(ConsoleColors.RED,String.format("%s won :/"));
+                }
+            }
+            printColoredMessageLn(ConsoleColors.BLUE,"Recieving log...");
+            wait(3000);
+            printColoredMessageLn(ConsoleColors.BLUE_BOLD,read.getBody().toString());
         }
     }
 
