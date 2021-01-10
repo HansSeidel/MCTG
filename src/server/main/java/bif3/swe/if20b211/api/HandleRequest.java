@@ -133,7 +133,7 @@ public class HandleRequest {
                     if (System.currentTimeMillis()-startTime > 1000)
                         return new Format(404, "No Opponent Found - No opponent has a deck equipt at the moment. " +
                                 "You must tell your friends to buy this game for faster queues :)",null);
-                } while (opponent_deck == null);
+                } while (opponent_deck == null || opponent_deck.isEmpty());
             } catch (SQLException throwables) {
                 throwables.printStackTrace();
             }
@@ -142,7 +142,9 @@ public class HandleRequest {
             response.addHeader("winner",battle.getWinnerName());
             //response.addHeader("coins",battle.getCoinsWon(battle.getWinner()));
             //response.addHeader("elo",battle.getElo(battle.getWinner()));
-            response.setBody(battle.getLog(),"plain/text");
+            System.out.print(battle.getLog());
+            response.setBody(battle.getLog(),null);
+            System.out.println(response.getBody().toString());
             return response;
         }
         return new Format(404, "Request Not Found", null);

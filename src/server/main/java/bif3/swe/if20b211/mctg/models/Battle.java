@@ -22,18 +22,25 @@ public class Battle {
 
     private void fight() {
         log(String.format("\t%s\t\tvs\t\t%s\n",attacker.getUsername(),opponent.getUsername()));
+        System.out.print("Username of opponent: " + opponent.getUsername());
         if(this.deck_attacker.size() > this.deck_opponent.size()){
             int i = 0;
             for (Card card:deck_attacker) {
-                log(String.format("\t-%s\t\t\t\t-%s\n",
-                        card.getCardname(),deck_opponent.get(i) == null? "":deck_opponent.get(i)));
+                if(deck_opponent.size() > i){
+                    log(String.format("\t-%s\t\t\t\t-%s\n", card.getCardname(),deck_opponent.get(i).getCardname()));
+                }else {
+                    log(String.format("\t-%s\t\t\t\t-%s\n", card.getCardname(),""));
+                }
                 i++;
             }
         }else{
             int i = 0;
             for (Card card:deck_opponent) {
-                log(String.format("\t-%s\t\t\t\t-%s\n",
-                        card.getCardname(),deck_attacker.get(i) == null? "":deck_attacker.get(i)));
+                if(deck_attacker.size() > i){
+                    log(String.format("\t-%s\t\t\t\t-%s\n", card.getCardname(),deck_attacker.get(i).getCardname()));
+                }else {
+                    log(String.format("\t-%s\t\t\t\t-%s\n", card.getCardname(),""));
+                }
                 i++;
             }
         }
@@ -47,22 +54,22 @@ public class Battle {
             if(attacker_card.isStronger(opponent_card) > 0){
                 deck_attacker.add(attacker_card);
                 deck_attacker.add(opponent_card);
-                log(String.format("Round %d\t-%s\t\tvs\t\t-%s\t%s takes control\n",
-                        i,attacker_card,opponent_card,attacker.getUsername()));
+                log(String.format("Round %d\t-%s\t\tvs\t\t-%s\t\t%s takes control\n",
+                        i,attacker_card.getCardname(),opponent_card.getCardname(),attacker.getUsername()));
             }else if (attacker_card.isStronger(opponent_card) < 0){
                 deck_opponent.add(attacker_card);
                 deck_opponent.add(opponent_card);
-                log(String.format("Round %d\t-%s\t\tvs\t\t-%s\t%s takes control\n",
-                        i,attacker_card,opponent_card,opponent.getUsername()));
+                log(String.format("Round %d\t-%s\t\tvs\t\t-%s\t\t%s takes control\n",
+                        i,attacker_card.getCardname(),opponent_card.getCardname(),opponent.getUsername()));
             }else {
                 deck_attacker.add(attacker_card);
                 deck_opponent.add(opponent_card);
-                log(String.format("Round %d\t-%s\t\tvs\t\t-%s\tDRAW\n",
-                        i,attacker_card,opponent_card));
+                log(String.format("Round %d\t-%s\t\tvs\t\t-%s\t\tDRAW\n",
+                        i,attacker_card.getCardname(),opponent_card.getCardname()));
             }
             if(gameFinished()){
                 defineWinner();
-                log(String.format("\n\n\t%s",getWinnerName()));
+                log(String.format("\t%s wins!",getWinnerName()));
                 return;
             }
         }

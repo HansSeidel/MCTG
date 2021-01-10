@@ -15,27 +15,28 @@ public class MainClient {
             cch.welcomeMessage();
             Format request = null;
             while (true){
+                Thread.sleep(5);
                 if(!cch.isUserLoggedIn()){
                     System.out.println("Not logged in");
                     cch.logInOrRegister();
-                    request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType());
+                    if(cch.sendAbel())
+                        request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType());
                 }else{
                     boolean skip = false;
-                    System.out.println("Logged in");
                     String userCommand = cch.requestInput();
                     if(userCommand.startsWith("buy")){
                         cch.acquirePackage(userCommand);
                     }else if(userCommand.startsWith("deck")){
                         cch.manageDeck(userCommand);
                     }else if(userCommand.equals("battle")){
-                        cch.startBattel();
+                        cch.startBattle();
                     }else if(userCommand.equals("quit")){
                         break;
                     }else {
                         cch.wrongInput("Unknown command");
                         skip = true;
                     }
-                    if(!skip || !cch.sendAbel()){
+                    if(!skip){
                         request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType());
                         if(cch.getArgs() != null)
                             for (String arg:cch.getArgs())
@@ -43,9 +44,12 @@ public class MainClient {
                         request.addHeader("token", cch.getToken());
                     }
                 }
-                request.buildFormat();
-                write(request.BARE_STRING,s);
-                cch.handleResponse(new Format(read(s)));
+                if(cch.sendAbel()){
+                    request.buildFormat();
+                    write(request.BARE_STRING,s);
+                    cch.handleResponse(new Format(read(s)));
+                }
+                cch.resetSendable();
             }
         } catch (Exception e) {
             e.printStackTrace();

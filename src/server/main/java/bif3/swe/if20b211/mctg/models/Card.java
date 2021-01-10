@@ -187,7 +187,9 @@ public class Card {
             return 1;
 
         //Define witch rules --------------------------------------
+        boolean no_condition = true;
         if(this.getCardname().equals("witch")){
+            no_condition = false;
             int rand = (int) Math.random()*100;
             if(rand >= 50){
                 att_final.setDamage(att_final.getDamage() + this.getDamage()- 30);
@@ -200,6 +202,7 @@ public class Card {
             }
         }
         if(opponent_card.getCardname().equals("witch")){
+            no_condition = false;
             int rand = (int) Math.random()*100;
             if(rand >= 50){
                 opp_final.setDamage(opp_final.getDamage() + opponent_card.getDamage()- 30);
@@ -214,30 +217,37 @@ public class Card {
 
         //Define Monster vs Spell -------------------------------------
         if(this.getCardType().equals("fire") && opponent_card.getCardType().equals("water")){
+            no_condition = false;
             if(this.getIs_a().equals("monster") && opponent_card.getIs_a().equals("spell")){
                 att_final.setDamage(att_final.getDamage() + this.getDamage()/2);
-                opp_final.setDamage(opp_final.getDamage() + opp_final.getDamage()*2);
+                opp_final.setDamage(opp_final.getDamage() + opponent_card.getDamage()*2);
             }else if (this.getIs_a().equals("spell") && opponent_card.getIs_a().equals("monster")){
                 att_final.setDamage(att_final.getDamage() + this.getDamage()/2);
-                opp_final.setDamage(opp_final.getDamage() + opp_final.getDamage()*2);
+                opp_final.setDamage(opp_final.getDamage() + opponent_card.getDamage()*2);
             }else {
                 att_final.setDamage(att_final.getDamage() + this.getDamage());
-                opp_final.setDamage(opp_final.getDamage() + opp_final.getDamage());
+                opp_final.setDamage(opp_final.getDamage() + opponent_card.getDamage());
             }
         }
         //Define Spell vs Monster
         if(this.getCardType().equals("water") && opponent_card.getCardType().equals("fire")){
+            no_condition = false;
             if(this.getIs_a().equals("monster") && opponent_card.getIs_a().equals("spell")){
                 att_final.setDamage(att_final.getDamage() + this.getDamage()*2);
-                opp_final.setDamage(opp_final.getDamage() + opp_final.getDamage()/2);
+                opp_final.setDamage(opp_final.getDamage() + opponent_card.getDamage()/2);
             }else if (this.getIs_a().equals("spell") && opponent_card.getIs_a().equals("monster")){
                 att_final.setDamage(att_final.getDamage() + this.getDamage()*2);
-                opp_final.setDamage(opp_final.getDamage() + opp_final.getDamage()/2);
+                opp_final.setDamage(opp_final.getDamage() + opponent_card.getDamage()/2);
             }else {
                 att_final.setDamage(att_final.getDamage() + this.getDamage());
-                opp_final.setDamage(opp_final.getDamage() + opp_final.getDamage());
+                opp_final.setDamage(opp_final.getDamage() + opponent_card.getDamage());
             }
         }
+        if(no_condition){
+            att_final.setDamage(att_final.getDamage() + this.getDamage());
+            opp_final.setDamage(opp_final.getDamage() + opponent_card.getDamage());
+        }
+        System.out.print("Att_ " + att_final.getDamage() + "  Opp_ " + opp_final.getDamage());
         return att_final.getDamage() - opp_final.getDamage();
     }
 }

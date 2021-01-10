@@ -39,6 +39,7 @@ public class ClientConsoleHandler {
     }
     private String getInput() throws IOException {return this.clientBR.readLine(); }
     public void wrongInput(String message) {
+        this.sendAbel = false;
         printColoredMessageLn(ConsoleColors.RED, String.format("ERROR APPEARED: %s\n%s",message,
                 "Enter help to see all commands"));
         this.colorReset();
@@ -84,14 +85,14 @@ public class ClientConsoleHandler {
         String[] credentials = this.getInput().trim().split(" ");
         if(credentials.length > 4){
             this.wrongInput("Too many input Parameter.");
-            logInOrRegister(); //Recursive call if input has been wrong.
             this.colorReset();
+            this.sendAbel = false;
             return;
         }
         if(!(credentials[0].toLowerCase().equals("register") || credentials[0].toLowerCase().equals("login"))) {
             this.wrongInput("You have to be logged to use this application.");
-            logInOrRegister(); //Recursive call if input has been wrong.
             this.colorReset();
+            this.sendAbel = false;
             return;
         }
         if(credentials.length < 2){
@@ -108,8 +109,8 @@ public class ClientConsoleHandler {
             printColoredMessageLn(ConsoleColors.BLUE,"Please verify you password");
             if(!getInput().equals(credentials[2])){
                 wrongInput("The verification failed.");
-                logInOrRegister(); //Recursive call if input has been wrong.
                 this.colorReset();
+                this.sendAbel = false;
                 return;
             }
         }
@@ -173,7 +174,7 @@ public class ClientConsoleHandler {
                 String.format("cardname=%s",cardname),String.format("action=%s",userCommand.split(" ")[1]));
     }
 
-    public void startBattel() throws IOException {
+    public void startBattle() throws IOException {
         printColoredMessageLn(ConsoleColors.BLUE,"You about to start a battle. Press [y] to start.");
         if(getInput().equals("y")){
             prepareStatement(Format.Http_Method.GET,"battle",null,null);
@@ -223,9 +224,8 @@ public class ClientConsoleHandler {
         }
         if(model.equals("user")) {
             this.user.setToken(read.getValueOfStringHashMap(read.getHeaders(),"token"));
-            System.out.println("Token is set to: " + this.user.getToken());
             if(read.getStatus() == 200) printColoredMessageLn(ConsoleColors.BLUE,"Logged in");
-            if(read.getStatus() == 201) printColoredMessageLn(ConsoleColors.BLUE,"Registerd and Logged in");
+            if(read.getStatus() == 201) printColoredMessageLn(ConsoleColors.BLUE,"Registered and Logged in");
             if(read.getStatus() == 205) printColoredMessageLn(ConsoleColors.BLUE, "Logged out");
         }
         if(model.equals("cards") || model.equals(("deck"))) {
@@ -275,11 +275,10 @@ public class ClientConsoleHandler {
                 if (winner.equals("DRAW")){
                     printColoredMessageLn(ConsoleColors.BLUE,"DRAW");
                 }else {
-                    printColoredMessageLn(ConsoleColors.RED,String.format("%s won :/"));
+                    printColoredMessageLn(ConsoleColors.RED,String.format("%s won :/",winner));
                 }
             }
             printColoredMessageLn(ConsoleColors.BLUE,"Recieving log...");
-            wait(3000);
             printColoredMessageLn(ConsoleColors.BLUE_BOLD,read.getBody().toString());
         }
     }
@@ -316,9 +315,10 @@ public class ClientConsoleHandler {
     }
 
     public boolean sendAbel() {
-        boolean result = this.sendAbel;
-        sendAbel = true;
-        return result;
+        return this.sendAbel;
+    }
+    public void resetSendable(){
+        this.sendAbel = true;
     }
 
 }
