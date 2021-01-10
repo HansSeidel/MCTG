@@ -178,8 +178,8 @@ public class HandleRequest {
                 String finalBody = "{";
                 int i = 0;
                 for (Card card:cards) {
-                    finalBody += String.format("\n\t%d:{\n\t%s}",i,Json_form.stringify(Json_form.toJson(card)));
-                    finalBody += cards.lastIndexOf(card) == i?",":"\n}";
+                    finalBody += String.format("\n\t%d:%s",i,Json_form.stringify(Json_form.toJson(card)));
+                    finalBody += cards.size()-1 == i?"\n}":",";
                     i++;
                 }
                 response.addHeader("model","Cards");

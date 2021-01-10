@@ -115,10 +115,7 @@ public class DBConnector {
                             db_cards.getString("type"),
                             db_cards.getString("is_a"),
                             db_cards.getInt("occurance")));
-                    System.out.println("Inside if inside nested loop -> cardname: " + db_cards.getString("cardname"));
-                    results.stream().forEach(card -> System.out.printf("\nAnd the resultset is with cardname: %s",card.getCardname()));
                 }
-
                 if(occ_counter < db_cards.getInt("occurance")){
                     occ_counter++;
                 }else {
@@ -127,7 +124,6 @@ public class DBConnector {
                 }
             }
         }
-        results.forEach(card -> System.out.printf("\nAt the end of function acquire -> Cardname: %s",card.getCardname()));
         return results;
     }
 

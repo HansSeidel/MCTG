@@ -195,6 +195,9 @@ public class ClientConsoleHandler {
             if(read.getStatus() == 201) printColoredMessageLn(ConsoleColors.BLUE,"Registerd and Logged in");
             if(read.getStatus() == 205) printColoredMessageLn(ConsoleColors.BLUE, "Logged out");
         }
+        if(model.equals("Cards")) {
+            System.out.println("Response bare body: " + read.getBody().toString());
+        }
     }
 
 
