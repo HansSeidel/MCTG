@@ -69,7 +69,7 @@ public class MainServer implements Runnable {
 
         switch (request.getMethod()){
             case GET: return HandleRequest.GET(request,_dbConnector);
-            case POST: return HandleRequest.POST(request);
+            case POST: return HandleRequest.POST(request,_dbConnector);
             case PATCH: return HandleRequest.PATCH(request);
             case PUT: return HandleRequest.PUT(request);
             case DELETE: return HandleRequest.DELETE(request);

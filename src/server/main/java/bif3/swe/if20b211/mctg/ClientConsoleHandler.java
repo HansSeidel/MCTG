@@ -149,6 +149,30 @@ public class ClientConsoleHandler {
         this.colorReset();
     }
 
+    public void manageDeck(String userCommand) {
+        String command;
+        String cardname;
+        if(userCommand.trim().equals("deck show")){
+            this.prepareStatement(Format.Http_Method.GET,"deck",null,"action=show");
+            return;
+        }
+        if(userCommand.trim().startsWith("deck add ") || userCommand.trim().startsWith("deck remove ")){
+            cardname = userCommand.split( " ")[2];
+        }else {
+            printColoredMessageLn(ConsoleColors.BLUE,"Please enter a cards name");
+            try{
+                cardname = getInput();
+            }catch (IOException e){
+                wrongInput("Too many Parameters.");
+                colorReset();
+                this.sendAbel = false;
+                return;
+            }
+        }
+        this.prepareStatement(Format.Http_Method.POST,"deck", null,
+                String.format("cardname=%s",cardname),String.format("action=%s",userCommand.split(" ")[1]));
+    }
+
     /**
      * This function prepares all properties to be ready for http-transmission
      * @param method Format.Http_Method
@@ -194,10 +218,24 @@ public class ClientConsoleHandler {
             if(read.getStatus() == 201) printColoredMessageLn(ConsoleColors.BLUE,"Registerd and Logged in");
             if(read.getStatus() == 205) printColoredMessageLn(ConsoleColors.BLUE, "Logged out");
         }
-        if(model.equals("Cards")) {
+        if(model.equals("cards") || model.equals(("deck"))) {
             try {
+                if(model.equals("cards")){
+                    printColoredMessageLn(ConsoleColors.BLUE,"You recieved the following cards:");
+                    if(read.getBody().toString().equals("{}")){
+                        printColoredMessageLn(ConsoleColors.RED,"Sorry - can't show this cards correctly");
+                        colorReset();
+                        return;
+                    }
+                }else {
+                    printColoredMessageLn(ConsoleColors.BLUE,"Your deck contains the following cards:");
+                    if(read.getBody().toString().equals("{}")){
+                        printColoredMessageLn(ConsoleColors.BLUE,"You have no cards in your deck.");
+                        colorReset();
+                        return;
+                    }
+                }
                 JsonNode node = read.getBody().getJson_format();
-                printColoredMessageLn(ConsoleColors.BLUE,"You recieved the following cards:");
                 node.elements().forEachRemaining(el -> {
                     Card card = null;
                     try {

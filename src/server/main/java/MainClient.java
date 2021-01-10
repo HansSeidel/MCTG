@@ -32,6 +32,8 @@ public class MainClient {
                     String userCommand = cch.requestInput();
                     if(userCommand.startsWith("buy")){
                         cch.acquirePackage(userCommand);
+                    }else if(userCommand.startsWith("deck")){
+                        cch.manageDeck(userCommand);
                     }else {
                         cch.wrongInput("Unknown command");
                         skip = true;

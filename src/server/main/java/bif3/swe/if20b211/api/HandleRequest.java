@@ -175,14 +175,8 @@ public class HandleRequest {
                 if(cards == null) return new Format(409, "Conflict - You may only buy 10 packages at once",null);
                 _dbConnector.updateCoins(user.getUsername(),amount);
                 _dbConnector.addToStack(user.getUsername(),amount,cards);
-                String finalBody = "{";
-                int i = 0;
-                for (Card card:cards) {
-                    finalBody += String.format("\n\t\"%d\":%s",i,Json_form.stringify(Json_form.toJson(card)));
-                    finalBody += cards.size()-1 == i?"\n}":",";
-                    i++;
-                }
-                response.addHeader("model","Cards");
+                String finalBody = _dbConnector.createCardsBody(cards);
+                response.addHeader("model","cards");
                 response.setBody(finalBody,"application/json");
                 return response;
             } catch (SQLException | JsonProcessingException throwables) {
@@ -190,12 +184,30 @@ public class HandleRequest {
                 return new Format(500, "Internal Server Error - Please contact the administrator",null);
             }
         }
+        if (request.getPath().equals("\\api\\mctg\\deck")){
+            String action = request.getValueOfStringHashMap(request.getArguments(),"action");
+            if(action.equals("show")){
+                try {
+                    List<Card> cards = _dbConnector.getDeck(user.getUsername());
+                    String finalBody = _dbConnector.createCardsBody(cards);
+                    response.addHeader("model","deck");
+                    response.setBody(finalBody,"application/json");
+                    return response;
+                } catch (SQLException | JsonProcessingException throwables) {
+                    throwables.printStackTrace();
+                    return new Format(500, "Internal Server Error - Please contact the administrator",null);
+                }
+
+            }else {
+                return new Format(404, "Request Not Found - unknown action in Header field", null);
+            }
+        }
         return new Format(404, "Request Not Found", null);
     }
 
-    public static Format POST(Format request) {
+    public static Format POST(Format request, DBConnector _dbConnector) {
+        Format response = new Format(Format.Http_Format_Type.RESPONSE);
         if (request.getPath().equals("\\messages") || request.getPath().equals("\\messages\\")) {
-            Format response = new Format(Format.Http_Format_Type.RESPONSE);
             Messages messages;
             Message m;
             try {
@@ -220,6 +232,27 @@ public class HandleRequest {
                 }
             }
             return response;
+        } else if (request.getPath().equals("\\api\\mctg\\deck")){
+            String cardname = request.getValueOfStringHashMap(request.getArguments(),"cardname");
+            String action = request.getValueOfStringHashMap(request.getArguments(),"action");
+            try {
+                if(action.equals("add"))
+                    if(_dbConnector.countDeck(user.getUsername()) >= 4)
+                        return new Format(409,"Conflict - You can only have 4 cards in your deck.",null);
+                List<Card> cards = _dbConnector.manageDeck(user.getUsername(),cardname,action);
+                if(cards == null){
+                    if(action.equals("add")) return new Format(409, "Conflict - This card does either not exists or isn't in your stack", null);
+                    return new Format(409,"Conflict - You can't remove this card, it is not inside your deck.",null);
+                }
+                String finalBody = _dbConnector.createCardsBody(cards);
+                response.addHeader("model","deck");
+                response.setBody(finalBody,"application/json");
+                return response;
+            } catch (SQLException | JsonProcessingException throwables) {
+                throwables.printStackTrace();
+                return new Format(500, "Internal Server Error - Please contact the administrator",null);
+            }
+
         } else {
             return new Format(403, "Forbidden - You are not allowed to get any data from your requested resource.", null);
         }

@@ -1,7 +1,9 @@
 package bif3.swe.if20b211.api;
 
+import bif3.swe.if20b211.http.Json_form;
 import bif3.swe.if20b211.mctg.models.Card;
 import bif3.swe.if20b211.mctg.models.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -133,8 +135,35 @@ public class DBConnector {
                         amount*5,username));
     }
 
-    public void addToDeck(String username, int amount, Card[] cards) {
+    public List<Card> manageDeck(String username, String cardname, String action) throws SQLException {
+        System.out.println("ACTION: " + action);
+        int i = connector.createStatement()
+                .executeUpdate(String.format("UPDATE \"Stack\" SET in_deck = %s " +
+                        "WHERE username = '%s' AND cardname = '%s';",
+                        action.equals("add")?"true":"false",username,cardname));
+        if(i != 1){
+            return null;
+        }
+        return getDeck(username);
+    }
 
+    public List<Card> getDeck(String username) throws SQLException {
+        List<Card> results = new ArrayList<Card>();
+        ResultSet cards_in_deck = connector.createStatement()
+                .executeQuery(String.format("SELECT * FROM \"Stack\" WHERE in_deck = true AND username = '%s';",
+                        username));
+        while (cards_in_deck.next()){
+            ResultSet card = connector.createStatement().executeQuery(String.format("SELECT * FROM \"Card\" WHERE cardname = '%s';",
+                    cards_in_deck.getString("cardname")));
+            card.next();
+            results.add(new Card(
+                    card.getString("cardname"),
+                    card.getInt("damage"),
+                    card.getString("type"),
+                    card.getString("is_a"),
+                    card.getInt("occurance")));
+        }
+        return results;
     }
 
     public void addToStack(String username,int amount, List<Card> cards) throws SQLException {
@@ -165,5 +194,25 @@ public class DBConnector {
 
             }
         });
+    }
+
+    public String createCardsBody(List<Card> cards) throws JsonProcessingException {
+        if(cards == null || cards.isEmpty()) return "{}";
+        String finalBody = "{";
+        int i = 0;
+        for (Card card:cards) {
+            finalBody += String.format("\n\t\"%d\":%s",i, Json_form.stringify(Json_form.toJson(card)));
+            finalBody += cards.size()-1 == i?"\n}":",";
+            i++;
+        }
+        return finalBody;
+    }
+
+    public int countDeck(String username) throws SQLException {
+        ResultSet count_cards_in_dec = connector.createStatement().
+                executeQuery(String.format("SELECT COUNT(*) FROM \"Stack\" " +
+                        "WHERE username = '%s' AND in_deck = true;", username));
+        count_cards_in_dec.next();
+        return count_cards_in_dec.getInt(1);
     }
 }
