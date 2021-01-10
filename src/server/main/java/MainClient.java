@@ -27,15 +27,22 @@ public class MainClient {
                     cch.logInOrRegister();
                     request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType());
                 }else{
+                    boolean skip = false;
                     System.out.println("Logged in");
                     String userCommand = cch.requestInput();
                     if(userCommand.startsWith("buy")){
                         cch.acquirePackage(userCommand);
+                    }else {
+                        cch.wrongInput("Unknown command");
+                        skip = true;
                     }
-                    request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType());
-                    for (String arg:cch.getArgs())
-                        request.addArgument(arg.split("=")[0],arg.split("=")[1]);
-                    request.addHeader("token", cch.getToken());
+                    if(!skip || !cch.sendAbel()){
+                        request = new Format(cch.getMethod(),HOST,cch.getRequestPath(), cch.getBody(), cch.getMimeType());
+                        if(cch.getArgs() != null)
+                            for (String arg:cch.getArgs())
+                                request.addArgument(arg.split("=")[0],arg.split("=")[1]);
+                        request.addHeader("token", cch.getToken());
+                    }
                 }
                 request.buildFormat();
                 write(request.BARE_STRING,s);

@@ -10,6 +10,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class DBConnector {
     private String url;
@@ -66,7 +69,6 @@ public class DBConnector {
             System.out.println("User has been added");
             return 0;
         }else{
-            System.err.println("Unkwon error");
             return -1;
         }
     }
@@ -85,43 +87,87 @@ public class DBConnector {
         return db_coins.getInt(1);
     }
 
-    public Card[] acquirePackages(int amount) throws SQLException {
-        if(amount >= 100) return null;
+    public List<Card> acquirePackages(int amount) throws SQLException {
+        if(amount >= 10) return null;
         //Think about taking all cards out of the database and do the rest inside here.
         List<Card> results = new ArrayList<Card>();
-        //https://stackoverflow.com/questions/8115722/generating-unique-random-numbers-in-java
-        ArrayList<Integer> randomNumber = new ArrayList<Integer>();
-        for (int i=0; i<1000; i++)
-            randomNumber.add(i);
-        Collections.shuffle(randomNumber);
-        for(int i = 0; i < amount;i++){ //Loop through amount of cards to take
-            ResultSet db_cards = connector.createStatement()
-                    .executeQuery("SELECT * FROM \"Card\" GROUP BY 2;");
+        ResultSet db_cards = connector.createStatement()
+                .executeQuery("SELECT SUM(occurance) FROM \"Card\"");
+        db_cards.next();
+        int randomRange = db_cards.getInt(1);
+        for(int i = 0; i < amount;i++){ //Loop through amount of packages to take
+            db_cards = connector.createStatement()
+                    .executeQuery("SELECT * FROM \"Card\";");
+            db_cards.next();
+            //https://stackoverflow.com/questions/8115722/generating-unique-random-numbers-in-java
+            List<Integer> randomNumber = IntStream.range(0, randomRange).boxed()
+                    .collect(Collectors.toCollection(ArrayList::new));
+            Collections.shuffle(randomNumber);
+            randomNumber = new ArrayList<>(randomNumber.subList(0, 5));
+            randomNumber.forEach(num -> System.out.println("Inside randNum: " + num));
             int occ_counter = 0;
-            for(int n = 0;n <= 1000;n++){ //Loop 1000*card.occurance times through all cards
-                for(int y = 0; y < (amount*5);y++) //Loop each time through cards amount again
-                    if(n == randomNumber.get(y)) //Compare with random number (unique)
-                        results.add(new Card(
-                        db_cards.getString("cardname"),
-                        db_cards.getInt("damage"),
-                        db_cards.getString("type"),
-                        db_cards.getString("is_a"),
-                        db_cards.getInt("occurance")));
-                if(occ_counter <= db_cards.getInt("occurance")){
+            for(int n = 0;n <= randomRange;n++){ //Loop cardCount*card.occurance times through all cards
+                if(randomNumber.contains(n)){
+                    //Compare with random number (unique)
+                    results.add(new Card(
+                            db_cards.getString("cardname"),
+                            db_cards.getInt("damage"),
+                            db_cards.getString("type"),
+                            db_cards.getString("is_a"),
+                            db_cards.getInt("occurance")));
+                    System.out.println("Inside if inside nested loop -> cardname: " + db_cards.getString("cardname"));
+                    results.stream().forEach(card -> System.out.printf("\nAnd the resultset is with cardname: %s",card.getCardname()));
+                }
+
+                if(occ_counter < db_cards.getInt("occurance")){
                     occ_counter++;
-                    n--; //As mentioned above, loop card.occurance times more often through the same card.
                 }else {
-                    if(!db_cards.next())db_cards.first();
+                    db_cards.next();
                     occ_counter = 0;
                 }
             }
         }
-        return results.toArray(new Card[results.size()]);
+        results.forEach(card -> System.out.printf("\nAt the end of function acquire -> Cardname: %s",card.getCardname()));
+        return results;
     }
 
-    public void updateCoins(String username, int amount) {
+    public void updateCoins(String username, int amount) throws SQLException {
+        connector.createStatement()
+                .executeUpdate(String.format("UPDATE \"MUser\" SET coins = coins - %d WHERE username = '%s';",
+                        amount*5,username));
     }
 
     public void addToDeck(String username, int amount, Card[] cards) {
+
+    }
+
+    public void addToStack(String username,int amount, List<Card> cards) throws SQLException {
+        AtomicBoolean rollback = new AtomicBoolean(true);
+        //Distinct
+        cards = cards.stream().distinct().collect(Collectors.toList());
+        List<String> doesOwn = new ArrayList<String>();
+        //Get cards in Stack:
+        ResultSet db_Stack = connector.createStatement()
+                .executeQuery(String.format("SELECT * FROM \"Stack\" WHERE username = '%s';",username));
+        while(db_Stack.next())
+            doesOwn.add(db_Stack.getString("cardname"));
+        cards.removeIf(card -> doesOwn.contains(card.getCardname()));
+        cards.forEach(card -> {
+            try {
+
+                connector.createStatement()
+                        .executeUpdate(String.format("INSERT INTO \"Stack\" (username,cardname)\n" +
+                                "VALUES ('%s','%s');",username,card.getCardname()));
+            } catch (SQLException e) {
+                try {
+                    if(rollback.get())updateCoins(username,amount*-1);
+                    rollback.set(false);
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                }
+                e.printStackTrace();
+
+            }
+        });
     }
 }

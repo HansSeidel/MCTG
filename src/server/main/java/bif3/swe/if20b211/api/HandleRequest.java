@@ -134,8 +134,8 @@ public class HandleRequest {
                 return new Format(503, "Service Unavailable - structure can't be processed. Please contact the server administrator", null);
             }
         }
+        Format response = new Format(Format.Http_Format_Type.RESPONSE);
         if(path.equals("\\api\\mctg\\register") || path.equals("\\api\\mctg\\login")){
-            Format response = new Format(Format.Http_Format_Type.RESPONSE);
             try {
                 user = request.getBody().fromJsonToObject(request.getBody().getJson_format(), User.class);
                 if(_dbConnector.userExists(user.getUsername())){
@@ -166,17 +166,28 @@ public class HandleRequest {
                 return new Format(401, "Unauthorized - You must be logged in for these comments",null);;
             try {
                 int current_coins = _dbConnector.getCoins(user.getUsername());
-                if(current_coins <= 5){
+                int amount = Integer.parseInt(request.getValueOfStringHashMap(request.getArguments(),"amount"));
+                if(current_coins < 5*amount){
                     if(current_coins == -1) return new Format(500, "Internal Server Error - No coins at all",null);
                     return new Format(409, "Conflict - Not enough coins",null);
                 }
-                int amount = Integer.parseInt(request.getValueOfStringHashMap(request.getArguments(),"amount"));
-                Card[] cards = _dbConnector.acquirePackages(amount);
+                List<Card> cards = _dbConnector.acquirePackages(amount);
+                if(cards == null) return new Format(409, "Conflict - You may only buy 10 packages at once",null);
                 _dbConnector.updateCoins(user.getUsername(),amount);
-                _dbConnector.addToDeck(user.getUsername(),amount,cards);
-                // Update Users deck
-            } catch (SQLException throwables) {
+                _dbConnector.addToStack(user.getUsername(),amount,cards);
+                String finalBody = "{";
+                int i = 0;
+                for (Card card:cards) {
+                    finalBody += String.format("\n\t%d:{\n\t%s}",i,Json_form.stringify(Json_form.toJson(card)));
+                    finalBody += cards.lastIndexOf(card) == i?",":"\n}";
+                    i++;
+                }
+                response.addHeader("model","Cards");
+                response.setBody(finalBody,"application/json");
+                return response;
+            } catch (SQLException | JsonProcessingException throwables) {
                 throwables.printStackTrace();
+                return new Format(500, "Internal Server Error - Please contact the administrator",null);
             }
         }
         return new Format(404, "Request Not Found", null);

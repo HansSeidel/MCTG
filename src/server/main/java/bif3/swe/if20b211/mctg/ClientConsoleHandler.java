@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 public class ClientConsoleHandler {
+    private boolean sendAbel;
     private BufferedReader clientBR;
     private User user = null;
     private String mctgPath = "/api/mctg/";
@@ -38,7 +39,7 @@ public class ClientConsoleHandler {
         System.out.printf("%s",ConsoleColors.RESET);
     }
     private String getInput() throws IOException {return this.clientBR.readLine(); }
-    private void wrongInput(String message) {
+    public void wrongInput(String message) {
         printColoredMessageLn(ConsoleColors.RED, String.format("ERROR APPEARED: %s\n%s",message,
                 "Enter help to see all commands"));
         this.colorReset();
@@ -79,7 +80,6 @@ public class ClientConsoleHandler {
      * @throws IOException
      */
     public void logInOrRegister() throws IOException {
-
         printColoredMessageLn(ConsoleColors.BLUE, "Please enter either login or register.");
         this.colorReset();
         String[] credentials = this.getInput().trim().split(" ");
@@ -134,6 +134,7 @@ public class ClientConsoleHandler {
             }catch (NumberFormatException e){
                 wrongInput("Expected a Number as last parameter.");
                 this.colorReset();
+                this.sendAbel = false;
                 return;
             }
         }
@@ -143,6 +144,7 @@ public class ClientConsoleHandler {
             this.prepareStatement(Format.Http_Method.GET,"order",null,
                     String.format("amount=%d",amount));
         }else {
+            this.sendAbel = false;
             this.printColoredMessageLn(ConsoleColors.YELLOW,"Canceled order");
         }
         this.colorReset();
@@ -224,5 +226,11 @@ public class ClientConsoleHandler {
 
     public String getToken() {
         return token;
+    }
+
+    public boolean sendAbel() {
+        boolean result = this.sendAbel;
+        sendAbel = true;
+        return result;
     }
 }
