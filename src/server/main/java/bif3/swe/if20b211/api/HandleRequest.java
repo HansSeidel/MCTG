@@ -163,7 +163,7 @@ public class HandleRequest {
         }
         if(path.equals("\\api\\mctg\\order")) {
             if(!checkAuth(request.getValueOfStringHashMap(request.getHeaders(),"token")))
-                return new Format(401, "Unauthorized - You must be logged in for these comments",null);;
+                return new Format(401, "Unauthorized - You must be logged in for these commands",null);;
             try {
                 int current_coins = _dbConnector.getCoins(user.getUsername());
                 int amount = Integer.parseInt(request.getValueOfStringHashMap(request.getArguments(),"amount"));
@@ -178,7 +178,7 @@ public class HandleRequest {
                 String finalBody = "{";
                 int i = 0;
                 for (Card card:cards) {
-                    finalBody += String.format("\n\t%d:%s",i,Json_form.stringify(Json_form.toJson(card)));
+                    finalBody += String.format("\n\t\"%d\":%s",i,Json_form.stringify(Json_form.toJson(card)));
                     finalBody += cards.size()-1 == i?"\n}":",";
                     i++;
                 }

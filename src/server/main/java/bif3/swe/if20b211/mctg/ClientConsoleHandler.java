@@ -1,17 +1,16 @@
 package bif3.swe.if20b211.mctg;
 
-import bif3.swe.if20b211.api.Message;
 import bif3.swe.if20b211.colores.ConsoleColors;
 import bif3.swe.if20b211.http.Format;
 import bif3.swe.if20b211.http.Json_form;
+import bif3.swe.if20b211.mctg.models.Card;
 import bif3.swe.if20b211.mctg.models.User;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.Collection;
-import java.util.HashMap;
 
 public class ClientConsoleHandler {
     private boolean sendAbel;
@@ -196,7 +195,28 @@ public class ClientConsoleHandler {
             if(read.getStatus() == 205) printColoredMessageLn(ConsoleColors.BLUE, "Logged out");
         }
         if(model.equals("Cards")) {
-            System.out.println("Response bare body: " + read.getBody().toString());
+            try {
+                JsonNode node = read.getBody().getJson_format();
+                printColoredMessageLn(ConsoleColors.BLUE,"You recieved the following cards:");
+                node.elements().forEachRemaining(el -> {
+                    Card card = null;
+                    try {
+                        card = Json_form.fromJson(el,Card.class);
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    }
+                    String color = ConsoleColors.BLUE_BRIGHT;
+                    if(card.getOccurance().equals("legendary")) color = ConsoleColors.YELLOW_BOLD_BRIGHT;
+                    if(card.getOccurance().equals("epic")) color = ConsoleColors.PURPLE;
+                    printColoredMessageLn(color,String.format("Cardname: %s, damage: %d, Card is a %s from type %s, Occurrence: %s",
+                            card.getCardname(),card.getDamage(),
+                            card.getIs_a(),card.getCardType(),
+                            card.getOccurance()));
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            colorReset();
         }
     }
 
