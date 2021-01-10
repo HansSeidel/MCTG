@@ -1,6 +1,5 @@
 import bif3.swe.if20b211.api.DBConnector;
 import bif3.swe.if20b211.api.HandleRequest;
-import bif3.swe.if20b211.api.Message;
 import bif3.swe.if20b211.colores.ConsoleColors;
 import bif3.swe.if20b211.http.Format;
 
@@ -70,19 +69,15 @@ public class MainServer implements Runnable {
         switch (request.getMethod()){
             case GET: return HandleRequest.GET(request,_dbConnector);
             case POST: return HandleRequest.POST(request,_dbConnector);
-            case PATCH: return HandleRequest.PATCH(request);
-            case PUT: return HandleRequest.PUT(request);
-            case DELETE: return HandleRequest.DELETE(request);
+            case PATCH:
+            case PUT:
+            case DELETE:
             case HEAD:
-                break;
             case CONNECT:
-                break;
             case OPTION:
-                break;
             case TRACE:
-                break;
         }
-        System.err.println("No httpmethod");
+        System.err.println("No supported httpmethod");
         return null;
     }
 

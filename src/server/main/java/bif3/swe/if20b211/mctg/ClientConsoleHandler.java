@@ -173,6 +173,16 @@ public class ClientConsoleHandler {
                 String.format("cardname=%s",cardname),String.format("action=%s",userCommand.split(" ")[1]));
     }
 
+    public void startBattel() throws IOException {
+        printColoredMessageLn(ConsoleColors.BLUE,"You about to start a battle. Press [y] to start.");
+        if(getInput().equals("y")){
+            prepareStatement(Format.Http_Method.GET,"battle",null,null);
+        }else{
+            colorReset();
+            this.sendAbel = false;
+        }
+    }
+
     /**
      * This function prepares all properties to be ready for http-transmission
      * @param method Format.Http_Method
@@ -294,4 +304,5 @@ public class ClientConsoleHandler {
         sendAbel = true;
         return result;
     }
+
 }

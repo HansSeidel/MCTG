@@ -1,15 +1,8 @@
-import bif3.swe.if20b211.api.Message;
-import bif3.swe.if20b211.api.Messages;
-import bif3.swe.if20b211.colores.ConsoleColors;
 import bif3.swe.if20b211.http.Format;
-import bif3.swe.if20b211.http.Json_form;
 import bif3.swe.if20b211.mctg.ClientConsoleHandler;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.json.JSONException;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Arrays;
 
 public class MainClient {
     public static void main(String[] args) {
@@ -34,6 +27,10 @@ public class MainClient {
                         cch.acquirePackage(userCommand);
                     }else if(userCommand.startsWith("deck")){
                         cch.manageDeck(userCommand);
+                    }else if(userCommand.equals("battle")){
+                        cch.startBattel();
+                    }else if(userCommand.equals("quit")){
+                        break;
                     }else {
                         cch.wrongInput("Unknown command");
                         skip = true;
